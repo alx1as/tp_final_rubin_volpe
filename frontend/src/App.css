@@ -38,6 +38,7 @@
 
   /* Layout */
   --ancho-sidebar: 240px;
+  --ancho-sidebar-colapsado: 72px;
   --alto-header: 70px;
   --padding-pagina: 32px;
 }
