@@ -1,0 +1,121 @@
+.barra-lateral {
+  width: var(--ancho-sidebar);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+  background-color: var(--color-superficie);
+  border-right: 1px solid var(--color-borde);
+  transition: width 0.25s ease;
+}
+
+.barra-lateral.contraida {
+  width: var(--ancho-sidebar-colapsado);
+}
+
+.cabecera {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.logo {
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  color: var(--color-texto);
+}
+
+.boton-menu {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radio-chico);
+  background-color: transparent;
+  color: var(--color-texto-secundario);
+  transition: 0.2s ease;
+}
+
+.boton-menu:hover {
+  background-color: var(--color-primario-suave);
+  color: var(--color-primario);
+}
+
+.buscador {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  margin-bottom: 20px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-chico);
+  background-color: var(--color-fondo);
+  color: var(--color-texto-secundario);
+}
+
+.buscador input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-texto);
+}
+
+.buscador input::placeholder {
+  color: var(--color-texto-secundario);
+}
+
+.navegacion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.opcion {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radio-chico);
+  background-color: transparent;
+  color: var(--color-texto-secundario);
+  text-align: left;
+  transition: 0.2s ease;
+}
+
+.opcion:hover {
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
+}
+
+.opcion.activa {
+  background-color: var(--color-primario-suave);
+  color: var(--color-primario);
+  font-weight: 600;
+}
+
+.pie {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-borde);
+}
+
+/* Al contraerse quedan visibles solo los iconos. */
+.contraida .cabecera,
+.contraida .buscador,
+.contraida .opcion {
+  justify-content: center;
+}
+
+.contraida .buscador,
+.contraida .opcion {
+  padding: 0;
+}
