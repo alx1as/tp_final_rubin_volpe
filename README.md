@@ -5,7 +5,7 @@
 * **Volpe, María Victoria**
 * **Rubin, Alexia**
 
-**Tutor:** a definir
+**Tutor:** Sergio Andrés Antonini
 **Año:** 2026
 
 ---
@@ -226,4 +226,4 @@ Se realizarán reuniones breves de seguimiento para integrar lo desarrollado, re
 
 Todo el proyecto se alojará en un único repositorio de GitHub.
 
-**Repositorio:** [enlace a completar]
+**Repositorio:** https://github.com/alx1as/tp_final_rubin_volpe
