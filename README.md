@@ -240,4 +240,4 @@ El producto será una aplicación web responsive. La arquitectura estará compue
 
 Todo el proyecto se alojará en un único repositorio de GitHub, incluyendo código fuente, documentación y los archivos necesarios para la entrega.
 
-Repositorio: TRABAJO FINAL GITHUB RUBIN Y VOLPE
+Repositorio: https://github.com/alx1as/tp_final_rubin_volpe
