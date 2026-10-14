@@ -1,0 +1,163 @@
+
+import { useState, type FormEvent } from "react";
+import "./Pacientes.css";
+
+type Paciente = {
+  id: number;
+  nombre: string;
+  apellido: string;
+  fechaNacimiento: string;
+  fechaInicio: string;
+  activo: boolean;
+};
+
+// Datos ficticios para probar la pantalla.
+const pacientesPrueba: Paciente[] = [
+  {
+    id: 1,
+    nombre: "Juan",
+    apellido: "Perez",
+    fechaNacimiento: "2015-05-10",
+    fechaInicio: "2026-10-14",
+    activo: true,
+  },
+];
+
+export default function Pacientes() {
+  const [pacientes, setPacientes] = useState(pacientesPrueba);
+  const [busqueda, setBusqueda] = useState("");
+  const [creando, setCreando] = useState(false);
+
+  const pacientesFiltrados = pacientes.filter((paciente) =>
+    `${paciente.nombre} ${paciente.apellido} ${paciente.apellido} ${paciente.nombre}`
+      .toLowerCase()
+      .includes(busqueda.toLowerCase().trim())
+  );
+
+  function crearPaciente(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+
+    const datos = new FormData(evento.currentTarget);
+
+    const nuevoPaciente: Paciente = {
+      id: Date.now(),
+      nombre: String(datos.get("nombre")).trim(),
+      apellido: String(datos.get("apellido")).trim(),
+      fechaNacimiento: String(datos.get("fechaNacimiento")),
+      fechaInicio: String(datos.get("fechaInicio")),
+      activo: true,
+    };
+
+    if (!nuevoPaciente.nombre || !nuevoPaciente.apellido) return;
+
+    setPacientes((actuales) => [...actuales, nuevoPaciente]);
+    setCreando(false);
+  }
+
+  return (
+    <div className="pagina-pacientes">
+      <div className="pacientes-cabecera">
+        <div>
+          <p className="pacientes-subtitulo">PANEL DE SEGUIMIENTO</p>
+          <h1>Pacientes</h1>
+          <p className="pacientes-descripcion">
+            Consultá los perfiles y continuá el seguimiento de cada paciente.
+          </p>
+        </div>
+
+        <button
+          className="pacientes-boton"
+          onClick={() => setCreando(!creando)}
+        >
+          {creando ? "Cerrar formulario" : "+ Nuevo paciente"}
+        </button>
+      </div>
+
+      {creando && (
+        <section className="pacientes-panel">
+          <h2>Nuevo paciente</h2>
+
+          <form className="pacientes-formulario" onSubmit={crearPaciente}>
+            <label>
+              Nombre
+              <input name="nombre" required />
+            </label>
+
+            <label>
+              Apellido
+              <input name="apellido" required />
+            </label>
+
+            <label>
+              Fecha de nacimiento
+              <input name="fechaNacimiento" type="date" required />
+            </label>
+
+            <label>
+              Inicio del seguimiento
+              <input name="fechaInicio" type="date" required />
+            </label>
+
+            <div className="pacientes-acciones">
+              <button type="submit" className="pacientes-boton">
+                Agregar paciente
+              </button>
+              <button type="button" onClick={() => setCreando(false)}>
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
+
+      <section className="pacientes-panel">
+        <div className="pacientes-listado-cabecera">
+          <h2>Listado</h2>
+          <span>{pacientes.length} registrados</span>
+        </div>
+
+        <input
+          className="pacientes-busqueda"
+          type="search"
+          placeholder="Buscar por nombre o apellido..."
+          aria-label="Buscar pacientes"
+          value={busqueda}
+          onChange={(evento) => setBusqueda(evento.target.value)}
+        />
+
+        <div className="pacientes-lista">
+          {pacientesFiltrados.map((paciente) => (
+            <div className="pacientes-fila" key={paciente.id}>
+              <span className="pacientes-avatar">
+                {paciente.nombre[0]}{paciente.apellido[0]}
+              </span>
+
+              <div className="pacientes-datos">
+                <strong>{paciente.apellido}, {paciente.nombre}</strong>
+                <small>
+                  Seguimiento desde {paciente.fechaInicio.split("-").reverse().join("/")}
+                </small>
+              </div>
+
+              <span className="pacientes-estado">
+                {paciente.activo ? "Activo" : "Inactivo"}
+              </span>
+            </div>
+          ))}
+
+          {pacientesFiltrados.length === 0 && (
+            <p className="pacientes-vacio">
+              {busqueda
+                ? "No se encontraron pacientes."
+                : "Todavía no hay pacientes registrados."}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <p className="pacientes-nota">
+        Para este TFI se utilizará datos ficticios.
+      </p>
+    </div>
+  );
+}
