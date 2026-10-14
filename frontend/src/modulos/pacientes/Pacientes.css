@@ -192,3 +192,126 @@
     flex-wrap: wrap;
   }
 }
+
+
+/* Ficha del paciente */
+.pacientes-fila {
+  width: 100%;
+  background: transparent;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ficha-volver {
+  background: none;
+  border: none;
+  color: var(--color-primario);
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+
+.ficha-datos {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 22px;
+}
+
+.ficha-datos div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ficha-datos small {
+  color: var(--color-texto-secundario);
+}
+
+@media (max-width: 600px) {
+  .ficha-datos {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Admisión */
+.admision-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.admision-formulario {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.admision-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admision-formulario input,
+.admision-formulario textarea {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  font: inherit;
+  background: white;
+}
+
+.admision-formulario textarea {
+  resize: vertical;
+}
+
+.admision-resumen {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.admision-resumen small {
+  color: var(--color-texto-secundario);
+}
+
+.admision-resumen p {
+  margin-top: 5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Registros escolares */
+.escolaridad-registro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.escolaridad-registro p,
+.escolaridad-registro small {
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+.escolaridad-registro button {
+  background: none;
+  border: none;
+  color: var(--color-primario);
+  cursor: pointer;
+  font-weight: 600;
+}

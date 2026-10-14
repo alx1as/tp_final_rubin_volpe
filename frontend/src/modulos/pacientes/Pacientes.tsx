@@ -1,8 +1,12 @@
 
 import { useState, type FormEvent } from "react";
 import "./Pacientes.css";
+import FichaPaciente from "./FichaPaciente";
+import type { Admision } from "./AdmisionPaciente";
+import type { Escolaridad } from "./EscolaridadPaciente";
 
-type Paciente = {
+
+export type Paciente = {
   id: number;
   nombre: string;
   apellido: string;
@@ -27,12 +31,16 @@ export default function Pacientes() {
   const [pacientes, setPacientes] = useState(pacientesPrueba);
   const [busqueda, setBusqueda] = useState("");
   const [creando, setCreando] = useState(false);
-
+  const [seleccionado, setSeleccionado] = useState<Paciente | null>(null);
+  const [admisiones, setAdmisiones] = useState<Record<number, Admision>>({});
   const pacientesFiltrados = pacientes.filter((paciente) =>
     `${paciente.nombre} ${paciente.apellido} ${paciente.apellido} ${paciente.nombre}`
       .toLowerCase()
       .includes(busqueda.toLowerCase().trim())
   );
+  const [escolaridades, setEscolaridades] = useState<
+  Record<number, Escolaridad[]>
+>({});
 
   function crearPaciente(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -53,6 +61,39 @@ export default function Pacientes() {
     setPacientes((actuales) => [...actuales, nuevoPaciente]);
     setCreando(false);
   }
+
+
+if (seleccionado) {
+  return (
+    <FichaPaciente
+      paciente={seleccionado}
+      admision={admisiones[seleccionado.id] ?? null}
+      onGuardarAdmision={(datos) =>
+        setAdmisiones((actuales) => ({
+          ...actuales,
+          [seleccionado.id]: datos,
+        }))
+      }
+      escolaridades={escolaridades[seleccionado.id] ?? []}
+      onGuardarEscolaridad={(registro) =>
+        setEscolaridades((actuales) => {
+          const registros = actuales[seleccionado.id] ?? [];
+          const existe = registros.some((item) => item.id === registro.id);
+
+          return {
+            ...actuales,
+            [seleccionado.id]: existe
+              ? registros.map((item) =>
+                  item.id === registro.id ? registro : item
+                )
+              : [...registros, registro],
+          };
+        })
+      }
+      onVolver={() => setSeleccionado(null)}
+    />
+  );
+}
 
   return (
     <div className="pagina-pacientes">
@@ -126,24 +167,31 @@ export default function Pacientes() {
         />
 
         <div className="pacientes-lista">
-          {pacientesFiltrados.map((paciente) => (
-            <div className="pacientes-fila" key={paciente.id}>
-              <span className="pacientes-avatar">
-                {paciente.nombre[0]}{paciente.apellido[0]}
-              </span>
 
-              <div className="pacientes-datos">
-                <strong>{paciente.apellido}, {paciente.nombre}</strong>
-                <small>
-                  Seguimiento desde {paciente.fechaInicio.split("-").reverse().join("/")}
-                </small>
-              </div>
+{pacientesFiltrados.map((paciente) => (
+  <button
+    type="button"
+    className="pacientes-fila"
+    key={paciente.id}
+    onClick={() => setSeleccionado(paciente)}
+  >
+    <span className="pacientes-avatar">
+      {paciente.nombre[0]}{paciente.apellido[0]}
+    </span>
 
-              <span className="pacientes-estado">
-                {paciente.activo ? "Activo" : "Inactivo"}
-              </span>
-            </div>
-          ))}
+    <div className="pacientes-datos">
+      <strong>{paciente.apellido}, {paciente.nombre}</strong>
+      <small>
+        Seguimiento desde {paciente.fechaInicio.split("-").reverse().join("/")}
+      </small>
+    </div>
+
+    <span className="pacientes-estado">
+      {paciente.activo ? "Activo" : "Inactivo"}
+    </span>
+  </button>
+))}
+
 
           {pacientesFiltrados.length === 0 && (
             <p className="pacientes-vacio">
