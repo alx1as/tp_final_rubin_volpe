@@ -1,0 +1,194 @@
+
+/* Estructura principal */
+.estructura-app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.estructura-app .barra-lateral {
+  flex-shrink: 0;
+}
+
+.contenido-principal {
+  flex: 1;
+  min-width: 0;
+  padding: 40px var(--padding-pagina);
+}
+
+.pagina-pacientes {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+/* Cabecera */
+.pacientes-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.pacientes-subtitulo {
+  color: var(--color-primario);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  margin-bottom: 10px;
+}
+
+.pacientes-cabecera h1 {
+  font-size: 29px;
+  margin-bottom: 5px;
+}
+
+.pacientes-descripcion,
+.pacientes-nota {
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+}
+
+.pacientes-boton {
+  background: var(--color-primario);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 17px;
+  font-weight: 600;
+}
+
+/* Panel y listado */
+.pacientes-panel {
+  background: var(--color-superficie);
+  border: 1px solid var(--color-borde);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 15px;
+}
+
+.pacientes-panel h2 {
+  font-size: 16px;
+}
+
+.pacientes-listado-cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.pacientes-listado-cabecera span {
+  color: var(--color-texto-secundario);
+  font-size: 12px;
+}
+
+.pacientes-busqueda,
+.pacientes-formulario input {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  outline-color: var(--color-primario);
+}
+
+.pacientes-busqueda {
+  margin-bottom: 15px;
+  background: var(--color-fondo);
+}
+
+.pacientes-fila {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 15px 5px;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.pacientes-fila:last-child {
+  border-bottom: none;
+}
+
+.pacientes-avatar {
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  background: var(--color-primario-suave);
+  color: var(--color-primario);
+  border-radius: 11px;
+  font-weight: 700;
+}
+
+.pacientes-datos {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.pacientes-datos small {
+  color: var(--color-texto-secundario);
+}
+
+.pacientes-estado {
+  background: var(--color-secundario-suave);
+  color: var(--color-secundario);
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.pacientes-vacio {
+  padding: 25px;
+  text-align: center;
+  color: var(--color-texto-secundario);
+}
+
+.pacientes-nota {
+  margin-top: 12px;
+}
+
+/* Formulario */
+.pacientes-formulario {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.pacientes-formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pacientes-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+}
+
+.pacientes-acciones button:not(.pacientes-boton) {
+  background: white;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  padding: 10px 15px;
+}
+
+/* Celulares */
+@media (max-width: 700px) {
+  .pacientes-cabecera {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pacientes-formulario {
+    grid-template-columns: 1fr;
+  }
+
+  .pacientes-acciones {
+    flex-wrap: wrap;
+  }
+}
