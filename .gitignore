@@ -15,3 +15,7 @@ backend/__pycache__/
 # Sistema / editor
 .DS_Store
 .vscode/
+
+# Editor
+backend/plan
+backend/AGENTS.md
