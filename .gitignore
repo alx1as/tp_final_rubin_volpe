@@ -5,12 +5,15 @@ frontend/dist/
 # Backend
 backend/.venv/
 backend/venv/
-backend/__pycache__/
+__pycache__/
 *.pyc
+.pytest_cache/
+backend/.test-postgres/
 
 # Variables de entorno
 .env
 .env.*
+!backend/.env.example
 
 # Sistema / editor
 .DS_Store

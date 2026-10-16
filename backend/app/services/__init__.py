@@ -1,0 +1,1 @@
+"""Operaciones de la aplicación."""

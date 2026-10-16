@@ -1,4 +1,86 @@
-# Backend: base de datos
+# Backend: API y base de datos
+
+## Entorno de desarrollo
+
+Requiere Python 3.13 y PostgreSQL. Desde la raíz del repositorio, en PowerShell:
+
+```powershell
+py -3.13 -m venv backend/.venv
+& ./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements-dev.txt
+if (-not (Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
+# Editar backend/.env con la URL de la base local antes del arranque.
+& ./backend/.venv/Scripts/python.exe -m uvicorn app.main:create_app --factory --app-dir backend
+```
+
+Si `py` no detecta Python, usar la ruta del ejecutable instalado de Python 3.13 para crear el entorno. No es necesario activar el entorno ni cambiar la política de ejecución de PowerShell.
+
+La documentación interactiva está en `http://127.0.0.1:8000/docs`; el esquema OpenAPI, en `/openapi.json`.
+
+La aplicación se organiza en `app/api`, `core`, `db`, `models`, `schemas`, `services` e `integrations`.
+
+Para instalar solo las dependencias de ejecución, usar `backend/requirements.txt`. Ambos archivos fijan las versiones comprobadas; el entorno virtual y las cachés están ignorados en Git.
+
+## Configuración
+
+`DATABASE_URL` es obligatoria y debe usar `postgresql+psycopg://`, un host y un nombre de base. El ejemplo versionado no contiene credenciales. Incorporar usuario y contraseña locales cuando el servidor lo requiera; codificar los caracteres reservados de la contraseña en la URL.
+
+La configuración se carga desde `backend/.env`, independientemente del directorio actual. Las variables de entorno prevalecen sobre el archivo. No sobrescribir un `.env` existente al repetir la instalación ni subirlo al repositorio.
+
+Una URL ausente o inválida impide iniciar y muestra un mensaje que identifica `DATABASE_URL`, sin su contenido. La URL se conserva como `SecretStr` y no aparece en la representación de la configuración. Con configuración válida, PostgreSQL puede estar caído y la API igualmente inicia.
+
+## Salud y conexión
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/api/salud
+```
+
+`GET /api/salud` es público y ejecuta `SELECT 1` en cada solicitud:
+
+| HTTP | JSON exacto |
+| --- | --- |
+| 200 | `{"estado":"ok","postgresql":"conectado"}` |
+| 503 | `{"estado":"error","postgresql":"no_disponible"}` |
+
+El endpoint comprueba conectividad; no comprueba la instalación del esquema. No registra datos ni expone excepciones de PostgreSQL. La documentación permanece disponible durante una caída. Al recuperar PostgreSQL, la siguiente solicitud de salud vuelve a funcionar sin reiniciar Uvicorn.
+
+Hay un engine compartido por aplicación y una sesión sincrónica de SQLModel por solicitud. Las sesiones cierran y revierten transacciones pendientes aun ante errores. El engine libera el pool al apagar la aplicación. `pool_pre_ping` descarta conexiones rotas al reutilizarlas.
+
+Se aplican tres límites independientes: conexión `connect_timeout=3`, espera del pool `pool_timeout=3` y consulta PostgreSQL `statement_timeout=3000` milisegundos. No constituyen un plazo total único de tres segundos. El pool permite cinco conexiones y cinco adicionales. El arranque no abre conexiones ni crea tablas ni ejecuta migraciones: el SQL se instala manualmente como se explica abajo.
+
+## Pruebas
+
+Desde la raíz, ejecutar pruebas que no necesitan un servidor PostgreSQL activo:
+
+```powershell
+& ./backend/.venv/Scripts/python.exe -m pytest -c backend/pytest.ini -m "not integration" -q
+```
+
+Para las pruebas de conexión, preparar una **base PostgreSQL exclusiva de pruebas**, cuyo nombre termine en `_test`, y configurar `TEST_DATABASE_URL`. No es necesario instalar `init.sql` para E1: la salud debe funcionar incluso con una base sin tablas.
+
+```powershell
+# Crear una vez en un servidor de pruebas, usando sus datos de conexión:
+& 'C:/Program Files/PostgreSQL/17/bin/createdb.exe' -h localhost -p 5432 -U postgres seguimiento_test
+$env:TEST_DATABASE_URL = 'postgresql+psycopg://localhost:5432/seguimiento_test'
+# Agregar las credenciales locales a la variable si PostgreSQL las requiere.
+& ./backend/.venv/Scripts/python.exe -m pytest -c backend/pytest.ini -q
+```
+
+Las pruebas sobre `TEST_DATABASE_URL` verifican conexión, cierre y rollback de sesiones, límite de consulta, salud y ausencia de escrituras o DDL. No detienen ese servidor ni borran o inicializan sus tablas. Si falta la variable, se informan como omitidas; eso no acredita la validación de integración.
+
+La prueba adicional de recuperación necesita los binarios de PostgreSQL en `POSTGRES_BIN`:
+
+```powershell
+$env:POSTGRES_BIN = 'C:/Program Files/PostgreSQL/17/bin'
+& ./backend/.venv/Scripts/python.exe -m pytest -c backend/pytest.ini -q
+```
+
+Esa prueba crea su propio cluster temporal en un directorio de pytest, escucha solo en `127.0.0.1` y usa un puerto libre. Arranca Uvicorn con PostgreSQL caído y verifica por HTTP `503 → 200 → 503 → 200`, manteniendo el mismo proceso de API. Solo inicia y detiene ese cluster; termina sus procesos al finalizar. La autenticación sin contraseña se limita a este cluster temporal de pruebas. Si falta `POSTGRES_BIN`, se omite esta prueba con el motivo correspondiente. No apuntar `POSTGRES_BIN` a un directorio de datos: debe contener `initdb`, `pg_ctl` y `createdb`.
+
+Para comprobar E1 completa, configurar **ambas** variables y ejecutar la suite sin pruebas omitidas. Los comandos también funcionan desde `backend` usando `./.venv/Scripts/python.exe -m pytest -q`.
+
+Referencias de implementación: [sesiones SQLModel con FastAPI](https://fastapi.tiangolo.com/tutorial/sql-databases/), [configuración con Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) y [recuperación del pool SQLAlchemy](https://docs.sqlalchemy.org/en/21/core/pooling.html).
+
+## Esquema de datos
 
 El esquema de PostgreSQL está definido en [init.sql](init.sql), a partir de la propuesta y del documento de arquitectura de datos de [docs](../docs). Contempla nueve tablas para las cuentas profesionales, los perfiles de pacientes y su seguimiento psicopedagógico.
 
