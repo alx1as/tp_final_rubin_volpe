@@ -4,7 +4,7 @@ import "./Pacientes.css";
 import FichaPaciente from "./FichaPaciente";
 import type { Admision } from "./AdmisionPaciente";
 import type { Escolaridad } from "./EscolaridadPaciente";
-
+import type { ProfesionalTratante } from "./ProfesionalesIntervinientes";
 
 export type Paciente = {
   id: number;
@@ -40,6 +40,10 @@ export default function Pacientes() {
   );
   const [escolaridades, setEscolaridades] = useState<
   Record<number, Escolaridad[]>
+>({});
+
+const [profesionales, setProfesionales] = useState<
+  Record<number, ProfesionalTratante[]>
 >({});
 
   function crearPaciente(evento: FormEvent<HTMLFormElement>) {
@@ -90,6 +94,23 @@ if (seleccionado) {
           };
         })
       }
+      profesionales={profesionales[seleccionado.id] ?? []}
+
+onGuardarProfesional={(registro) =>
+  setProfesionales((actuales) => {
+    const registros = actuales[seleccionado.id] ?? [];
+    const existe = registros.some((item) => item.id === registro.id);
+
+    return {
+      ...actuales,
+      [seleccionado.id]: existe
+        ? registros.map((item) =>
+            item.id === registro.id ? registro : item
+          )
+        : [...registros, registro],
+    };
+  })
+}
       onVolver={() => setSeleccionado(null)}
     />
   );
