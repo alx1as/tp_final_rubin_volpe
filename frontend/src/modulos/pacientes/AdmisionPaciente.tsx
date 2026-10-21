@@ -26,24 +26,29 @@ const campos = [
 type Props = {
   admision: Admision | null;
   fechaInicial: string;
-  onGuardar: (datos: Admision) => void;
+  onGuardar: (datos: Admision) => Promise<void>;
+  cargando: boolean;
+  error: string;
 };
 
 export default function AdmisionPaciente({
   admision,
   fechaInicial,
   onGuardar,
+  cargando,
+  error,
 }: Props) {
   const [editando, setEditando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
 
-  function guardar(evento: FormEvent<HTMLFormElement>) {
+  async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
 
     const formulario = new FormData(evento.currentTarget);
     const leer = (nombre: string) =>
       String(formulario.get(nombre) ?? "").trim();
 
-    onGuardar({
+    const datos: Admision = {
       fecha: leer("fecha"),
       motivo_consulta: leer("motivo_consulta"),
       antecedentes_personales: leer("antecedentes_personales"),
@@ -52,9 +57,17 @@ export default function AdmisionPaciente({
       grupo_familiar: leer("grupo_familiar"),
       tratamientos_actuales: leer("tratamientos_actuales"),
       observaciones: leer("observaciones"),
-    });
+    };
 
-    setEditando(false);
+    setGuardando(true);
+    try {
+      await onGuardar(datos);
+      setEditando(false);
+    } catch {
+      // El error se muestra desde la ficha; conservar el formulario abierto.
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return (
@@ -62,7 +75,7 @@ export default function AdmisionPaciente({
       <div className="admision-cabecera">
         <h2>Admisión</h2>
 
-        {!editando && (
+        {!cargando && !editando && (
           <button
             type="button"
             className="pacientes-boton"
@@ -73,7 +86,11 @@ export default function AdmisionPaciente({
         )}
       </div>
 
-      {editando ? (
+      {error && <p role="alert">{error}</p>}
+
+      {cargando ? (
+        <p className="pacientes-descripcion">Cargando admisión...</p>
+      ) : editando ? (
         <form className="admision-formulario" onSubmit={guardar}>
           <label>
             Fecha
@@ -99,10 +116,10 @@ export default function AdmisionPaciente({
           ))}
 
           <div className="pacientes-acciones">
-            <button type="submit" className="pacientes-boton">
-              Guardar admisión
+            <button type="submit" className="pacientes-boton" disabled={guardando}>
+              {guardando ? "Guardando..." : "Guardar admisión"}
             </button>
-            <button type="button" onClick={() => setEditando(false)}>
+            <button type="button" onClick={() => setEditando(false)} disabled={guardando}>
               Cancelar
             </button>
           </div>
