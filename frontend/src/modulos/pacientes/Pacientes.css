@@ -342,3 +342,39 @@
   cursor: pointer;
   font-weight: 600;
 }
+
+/* Objetivos de seguimiento */
+
+.objetivo-registro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--color-borde);
+}
+
+.objetivo-registro p {
+  color: var(--color-texto-secundario);
+  font-size: 13px;
+  margin-top: 5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.objetivo-registro button {
+  background: none;
+  border: none;
+  color: var(--color-primario);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admision-formulario select {
+  width: 100%;
+  padding: 11px;
+  border: 1px solid var(--color-borde);
+  border-radius: 8px;
+  font: inherit;
+  background: white;
+}

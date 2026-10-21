@@ -3,7 +3,7 @@ import type { Paciente } from "./Pacientes";
 import AdmisionPaciente, { type Admision } from "./AdmisionPaciente";
 import EscolaridadPaciente, { type Escolaridad } from "./EscolaridadPaciente";
 import ProfesionalesIntervinientes, { type ProfesionalTratante } from "./ProfesionalesIntervinientes";
-
+import ObjetivosPaciente, { type Objetivo } from "./ObjetivosPaciente";
 
 type Props = {
   paciente: Paciente;
@@ -14,6 +14,8 @@ type Props = {
 onGuardarEscolaridad: (registro: Escolaridad) => void;
 profesionales: ProfesionalTratante[];
 onGuardarProfesional: (registro: ProfesionalTratante) => void;
+objetivos: Objetivo[];
+onGuardarObjetivo: (registro: Objetivo) => void;
 };
 
 export default function FichaPaciente({
@@ -25,6 +27,8 @@ export default function FichaPaciente({
   onGuardarEscolaridad,
   profesionales,
 onGuardarProfesional,
+objetivos,
+onGuardarObjetivo,
 }: Props) {
   const fecha = (valor: string) =>
     valor.split("-").reverse().join("/");
@@ -96,6 +100,10 @@ onGuardarProfesional,
         <ProfesionalesIntervinientes
   registros={profesionales}
   onGuardar={onGuardarProfesional}
+/>
+      <ObjetivosPaciente
+  registros={objetivos}
+  onGuardar={onGuardarObjetivo}
 />
         </p>
       </section>

@@ -5,7 +5,7 @@ import FichaPaciente from "./FichaPaciente";
 import type { Admision } from "./AdmisionPaciente";
 import type { Escolaridad } from "./EscolaridadPaciente";
 import type { ProfesionalTratante } from "./ProfesionalesIntervinientes";
-
+import type { Objetivo } from "./ObjetivosPaciente";
 export type Paciente = {
   id: number;
   nombre: string;
@@ -45,7 +45,7 @@ export default function Pacientes() {
 const [profesionales, setProfesionales] = useState<
   Record<number, ProfesionalTratante[]>
 >({});
-
+const [objetivos, setObjetivos] = useState<Record<number, Objetivo[]>>({});
   function crearPaciente(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
 
@@ -98,6 +98,23 @@ if (seleccionado) {
 
 onGuardarProfesional={(registro) =>
   setProfesionales((actuales) => {
+    const registros = actuales[seleccionado.id] ?? [];
+    const existe = registros.some((item) => item.id === registro.id);
+
+    return {
+      ...actuales,
+      [seleccionado.id]: existe
+        ? registros.map((item) =>
+            item.id === registro.id ? registro : item
+          )
+        : [...registros, registro],
+    };
+  })
+}
+    objetivos={objetivos[seleccionado.id] ?? []}
+
+onGuardarObjetivo={(registro) =>
+  setObjetivos((actuales) => {
     const registros = actuales[seleccionado.id] ?? [];
     const existe = registros.some((item) => item.id === registro.id);
 
