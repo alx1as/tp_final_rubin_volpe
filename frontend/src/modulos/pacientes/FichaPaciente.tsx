@@ -60,12 +60,12 @@ export default function FichaPaciente({
 
           <div>
             <small>Fecha de nacimiento</small>
-            <strong>{fecha(paciente.fechaNacimiento)}</strong>
+            <strong>{fecha(paciente.fecha_nacimiento)}</strong>
           </div>
 
           <div>
             <small>Inicio del seguimiento</small>
-            <strong>{fecha(paciente.fechaInicio)}</strong>
+            <strong>{fecha(paciente.fecha_inicio_seguimiento)}</strong>
           </div>
 
           <div>
@@ -77,7 +77,7 @@ export default function FichaPaciente({
 
       <AdmisionPaciente
         admision={admision}
-        fechaInicial={paciente.fechaInicio}
+        fechaInicial={paciente.fecha_inicio_seguimiento}
         onGuardar={onGuardarAdmision}
       />
 
