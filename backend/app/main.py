@@ -11,6 +11,7 @@ from app.db.session import build_engine
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.pacientes import router as pacientes_router
+from app.api.admisiones import router as admisiones_router
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     configuration = settings if settings is not None else load_settings()
@@ -30,6 +31,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.engine = engine
     application.include_router(health_router, prefix="/api")
     application.include_router(pacientes_router, prefix="/api")
+    application.include_router(admisiones_router, prefix="/api")
 
         # Permitir solicitudes del frontend durante el desarrollo local.
         # más adelante configuramos los orígenes permitidos para producción.

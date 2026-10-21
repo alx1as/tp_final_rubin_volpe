@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { obtenerAdmision, guardarAdmision } from "../../servicios/api";
 
 import type { Paciente } from "./Pacientes";
 import AdmisionPaciente, { type Admision } from "./AdmisionPaciente";
@@ -8,8 +10,6 @@ import ObjetivosPaciente, { type Objetivo } from "./ObjetivosPaciente";
 type Props = {
   paciente: Paciente;
   onVolver: () => void;
-  admision: Admision | null;
-  onGuardarAdmision: (datos: Admision) => void;
   escolaridades: Escolaridad[];
 onGuardarEscolaridad: (registro: Escolaridad) => void;
 profesionales: ProfesionalTratante[];
@@ -21,8 +21,6 @@ onGuardarObjetivo: (registro: Objetivo) => void;
 export default function FichaPaciente({
   paciente,
   onVolver,
-  admision,
-  onGuardarAdmision,
   escolaridades,
   onGuardarEscolaridad,
   profesionales,
@@ -30,6 +28,48 @@ onGuardarProfesional,
 objetivos,
 onGuardarObjetivo,
 }: Props) {
+  const [admision, setAdmision] = useState<Admision | null>(null);
+  const [cargandoAdmision, setCargandoAdmision] = useState(true);
+  const [errorAdmision, setErrorAdmision] = useState("");
+
+  useEffect(() => {
+    let vigente = true;
+    setCargandoAdmision(true);
+    setErrorAdmision("");
+
+    obtenerAdmision(paciente.id)
+      .then((datos) => {
+        if (vigente) setAdmision(datos);
+      })
+      .catch((fallo) => {
+        if (vigente) {
+          setErrorAdmision(
+            fallo instanceof Error ? fallo.message : "No se pudo cargar la admisión."
+          );
+        }
+      })
+      .finally(() => {
+        if (vigente) setCargandoAdmision(false);
+      });
+
+    return () => {
+      vigente = false;
+    };
+  }, [paciente.id]);
+
+  async function guardarAdmisionPaciente(datos: Admision): Promise<void> {
+    setErrorAdmision("");
+    try {
+      const guardada = await guardarAdmision(paciente.id, datos);
+      setAdmision(guardada);
+    } catch (fallo) {
+      setErrorAdmision(
+        fallo instanceof Error ? fallo.message : "No se pudo guardar la admisión."
+      );
+      throw fallo;
+    }
+  }
+
   const fecha = (valor: string) =>
     valor.split("-").reverse().join("/");
 
@@ -86,7 +126,9 @@ onGuardarObjetivo,
       <AdmisionPaciente
         admision={admision}
         fechaInicial={paciente.fecha_inicio_seguimiento}
-        onGuardar={onGuardarAdmision}
+        onGuardar={guardarAdmisionPaciente}
+        cargando={cargandoAdmision}
+        error={errorAdmision}
       />
 
       <EscolaridadPaciente
