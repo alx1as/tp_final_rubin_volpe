@@ -1,3 +1,5 @@
+import type { Paciente } from "../modulos/pacientes/Pacientes";
+
 /* Centraliza la URL y la comunicación con el backend.
 Cuando desarrollemos los endpoints de pacientes, vamos a utilizar esta misma carpeta.*/
 export type SaludAPI = {
@@ -17,4 +19,35 @@ export async function consultarSalud(): Promise<SaludAPI> {
   }
 
   return (await respuesta.json()) as SaludAPI;
+}
+
+
+export type PacienteCrear = Omit<Paciente, "id" | "activo">;
+
+export async function listarPacientes(): Promise<Paciente[]> {
+  const respuesta = await fetch(`${API_URL}/api/pacientes`);
+
+  if (!respuesta.ok) {
+    throw new Error("No se pudieron cargar los pacientes");
+  }
+
+  return respuesta.json();
+}
+
+export async function guardarPaciente(
+  datos: PacienteCrear
+): Promise<Paciente> {
+  const respuesta = await fetch(`${API_URL}/api/pacientes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(datos),
+  });
+
+  if (!respuesta.ok) {
+    throw new Error(`No se pudo guardar el paciente (HTTP ${respuesta.status})`);
+  }
+
+  return respuesta.json();
 }
