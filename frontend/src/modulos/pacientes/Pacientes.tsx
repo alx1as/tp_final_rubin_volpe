@@ -10,8 +10,8 @@ export type Paciente = {
   id: number;
   nombre: string;
   apellido: string;
-  fechaNacimiento: string;
-  fechaInicio: string;
+  fecha_nacimiento: string;
+  fecha_inicio_seguimiento: string;
   activo: boolean;
 };
 
@@ -21,8 +21,8 @@ const pacientesPrueba: Paciente[] = [
     id: 1,
     nombre: "Juan",
     apellido: "Perez",
-    fechaNacimiento: "2015-05-10",
-    fechaInicio: "2026-10-14",
+    fecha_nacimiento: "2015-05-10",
+    fecha_inicio_seguimiento: "2026-10-14",
     activo: true,
   },
 ];
@@ -51,8 +51,8 @@ export default function Pacientes() {
       id: Date.now(),
       nombre: String(datos.get("nombre")).trim(),
       apellido: String(datos.get("apellido")).trim(),
-      fechaNacimiento: String(datos.get("fechaNacimiento")),
-      fechaInicio: String(datos.get("fechaInicio")),
+      fecha_nacimiento: String(datos.get("fecha_nacimiento")),
+      fecha_inicio_seguimiento: String(datos.get("fecha_inicio_seguimiento")),
       activo: true,
     };
 
@@ -131,12 +131,12 @@ if (seleccionado) {
 
             <label>
               Fecha de nacimiento
-              <input name="fechaNacimiento" type="date" required />
+              <input name="fecha_nacimiento" type="date" required />
             </label>
 
             <label>
               Inicio del seguimiento
-              <input name="fechaInicio" type="date" required />
+              <input name="fecha_inicio_seguimiento" type="date" required />
             </label>
 
             <div className="pacientes-acciones">
@@ -182,7 +182,7 @@ if (seleccionado) {
     <div className="pacientes-datos">
       <strong>{paciente.apellido}, {paciente.nombre}</strong>
       <small>
-        Seguimiento desde {paciente.fechaInicio.split("-").reverse().join("/")}
+        Seguimiento desde {paciente.fecha_inicio_seguimiento.split("-").reverse().join("/")}
       </small>
     </div>
 
