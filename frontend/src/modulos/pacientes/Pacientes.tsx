@@ -1,11 +1,18 @@
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  listarPacientes,
+  guardarPaciente,
+  type PacienteCrear,
+} from "../../servicios/api";
+
 import "./Pacientes.css";
 import FichaPaciente from "./FichaPaciente";
 import type { Admision } from "./AdmisionPaciente";
 import type { Escolaridad } from "./EscolaridadPaciente";
 import type { ProfesionalTratante } from "./ProfesionalesIntervinientes";
 import type { Objetivo } from "./ObjetivosPaciente";
+
 export type Paciente = {
   id: number;
   nombre: string;
@@ -15,129 +22,182 @@ export type Paciente = {
   activo: boolean;
 };
 
-// Datos ficticios para probar la pantalla.
-const pacientesPrueba: Paciente[] = [
-  {
-    id: 1,
-    nombre: "Juan",
-    apellido: "Perez",
-    fecha_nacimiento: "2015-05-10",
-    fecha_inicio_seguimiento: "2026-10-14",
-    activo: true,
-  },
-];
-
 export default function Pacientes() {
-  const [pacientes, setPacientes] = useState(pacientesPrueba);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [creando, setCreando] = useState(false);
   const [seleccionado, setSeleccionado] = useState<Paciente | null>(null);
+
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState("");
+
+  // Datos de los módulos de seguimiento.
   const [admisiones, setAdmisiones] = useState<Record<number, Admision>>({});
+
+  const [escolaridades, setEscolaridades] = useState<
+    Record<number, Escolaridad[]>
+  >({});
+
+  const [profesionales, setProfesionales] = useState<
+    Record<number, ProfesionalTratante[]>
+  >({});
+
+  const [objetivos, setObjetivos] = useState<
+    Record<number, Objetivo[]>
+  >({});
+
+  // Cargar pacientes desde PostgreSQL al abrir la pantalla.
+  useEffect(() => {
+    let vigente = true;
+
+    listarPacientes()
+      .then((datos) => {
+        if (vigente) {
+          setPacientes(datos);
+        }
+      })
+      .catch((fallo) => {
+        if (vigente) {
+          setError(
+            fallo instanceof Error
+              ? fallo.message
+              : "No se pudieron cargar los pacientes."
+          );
+        }
+      })
+      .finally(() => {
+        if (vigente) {
+          setCargando(false);
+        }
+      });
+
+    return () => {
+      vigente = false;
+    };
+  }, []);
+
+  // Buscar pacientes por nombre o apellido.
   const pacientesFiltrados = pacientes.filter((paciente) =>
     `${paciente.nombre} ${paciente.apellido} ${paciente.apellido} ${paciente.nombre}`
       .toLowerCase()
       .includes(busqueda.toLowerCase().trim())
   );
-  const [escolaridades, setEscolaridades] = useState<
-  Record<number, Escolaridad[]>
->({});
 
-const [profesionales, setProfesionales] = useState<
-  Record<number, ProfesionalTratante[]>
->({});
-const [objetivos, setObjetivos] = useState<Record<number, Objetivo[]>>({});
-  function crearPaciente(evento: FormEvent<HTMLFormElement>) {
+  // Guardar un nuevo paciente mediante la API.
+  async function crearPaciente(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
 
     const datos = new FormData(evento.currentTarget);
 
-    const nuevoPaciente: Paciente = {
-      id: Date.now(),
-      nombre: String(datos.get("nombre")).trim(),
-      apellido: String(datos.get("apellido")).trim(),
-      fecha_nacimiento: String(datos.get("fecha_nacimiento")),
-      fecha_inicio_seguimiento: String(datos.get("fecha_inicio_seguimiento")),
-      activo: true,
+    const nuevoPaciente: PacienteCrear = {
+      nombre: String(datos.get("nombre") ?? "").trim(),
+      apellido: String(datos.get("apellido") ?? "").trim(),
+      fecha_nacimiento: String(datos.get("fecha_nacimiento") ?? ""),
+      fecha_inicio_seguimiento: String(
+        datos.get("fecha_inicio_seguimiento") ?? ""
+      ),
     };
 
     if (!nuevoPaciente.nombre || !nuevoPaciente.apellido) return;
 
-    setPacientes((actuales) => [...actuales, nuevoPaciente]);
-    setCreando(false);
+    setGuardando(true);
+    setError("");
+
+    try {
+      const guardado = await guardarPaciente(nuevoPaciente);
+
+      setPacientes((actuales) => [...actuales, guardado]);
+      setCreando(false);
+    } catch (fallo) {
+      setError(
+        fallo instanceof Error
+          ? fallo.message
+          : "No se pudo guardar el paciente."
+      );
+    } finally {
+      setGuardando(false);
+    }
   }
 
-
-if (seleccionado) {
-  return (
-    <FichaPaciente
-      paciente={seleccionado}
-      admision={admisiones[seleccionado.id] ?? null}
-      onGuardarAdmision={(datos) =>
-        setAdmisiones((actuales) => ({
-          ...actuales,
-          [seleccionado.id]: datos,
-        }))
-      }
-      escolaridades={escolaridades[seleccionado.id] ?? []}
-      onGuardarEscolaridad={(registro) =>
-        setEscolaridades((actuales) => {
-          const registros = actuales[seleccionado.id] ?? [];
-          const existe = registros.some((item) => item.id === registro.id);
-
-          return {
+  // Mostrar la ficha del paciente seleccionado.
+  if (seleccionado) {
+    return (
+      <FichaPaciente
+        paciente={seleccionado}
+        admision={admisiones[seleccionado.id] ?? null}
+        onGuardarAdmision={(datos) =>
+          setAdmisiones((actuales) => ({
             ...actuales,
-            [seleccionado.id]: existe
-              ? registros.map((item) =>
-                  item.id === registro.id ? registro : item
-                )
-              : [...registros, registro],
-          };
-        })
-      }
-      profesionales={profesionales[seleccionado.id] ?? []}
+            [seleccionado.id]: datos,
+          }))
+        }
+        escolaridades={escolaridades[seleccionado.id] ?? []}
+        onGuardarEscolaridad={(registro) =>
+          setEscolaridades((actuales) => {
+            const registros = actuales[seleccionado.id] ?? [];
+            const existe = registros.some(
+              (item) => item.id === registro.id
+            );
 
-onGuardarProfesional={(registro) =>
-  setProfesionales((actuales) => {
-    const registros = actuales[seleccionado.id] ?? [];
-    const existe = registros.some((item) => item.id === registro.id);
+            return {
+              ...actuales,
+              [seleccionado.id]: existe
+                ? registros.map((item) =>
+                    item.id === registro.id ? registro : item
+                  )
+                : [...registros, registro],
+            };
+          })
+        }
+        profesionales={profesionales[seleccionado.id] ?? []}
+        onGuardarProfesional={(registro) =>
+          setProfesionales((actuales) => {
+            const registros = actuales[seleccionado.id] ?? [];
+            const existe = registros.some(
+              (item) => item.id === registro.id
+            );
 
-    return {
-      ...actuales,
-      [seleccionado.id]: existe
-        ? registros.map((item) =>
-            item.id === registro.id ? registro : item
-          )
-        : [...registros, registro],
-    };
-  })
-}
-    objetivos={objetivos[seleccionado.id] ?? []}
+            return {
+              ...actuales,
+              [seleccionado.id]: existe
+                ? registros.map((item) =>
+                    item.id === registro.id ? registro : item
+                  )
+                : [...registros, registro],
+            };
+          })
+        }
+        objetivos={objetivos[seleccionado.id] ?? []}
+        onGuardarObjetivo={(registro) =>
+          setObjetivos((actuales) => {
+            const registros = actuales[seleccionado.id] ?? [];
+            const existe = registros.some(
+              (item) => item.id === registro.id
+            );
 
-onGuardarObjetivo={(registro) =>
-  setObjetivos((actuales) => {
-    const registros = actuales[seleccionado.id] ?? [];
-    const existe = registros.some((item) => item.id === registro.id);
-
-    return {
-      ...actuales,
-      [seleccionado.id]: existe
-        ? registros.map((item) =>
-            item.id === registro.id ? registro : item
-          )
-        : [...registros, registro],
-    };
-  })
-}
-      onVolver={() => setSeleccionado(null)}
-    />
-  );
-}
+            return {
+              ...actuales,
+              [seleccionado.id]: existe
+                ? registros.map((item) =>
+                    item.id === registro.id ? registro : item
+                  )
+                : [...registros, registro],
+            };
+          })
+        }
+        onVolver={() => setSeleccionado(null)}
+      />
+    );
+  }
 
   return (
     <div className="pagina-pacientes">
       <div className="pacientes-cabecera">
         <div>
-          <p className="pacientes-subtitulo">PANEL DE SEGUIMIENTO</p>
+          <p className="pacientes-subtitulo">
+            PANEL DE SEGUIMIENTO
+          </p>
           <h1>Pacientes</h1>
           <p className="pacientes-descripcion">
             Consultá los perfiles y continuá el seguimiento de cada paciente.
@@ -152,11 +212,16 @@ onGuardarObjetivo={(registro) =>
         </button>
       </div>
 
+      {error && <p role="alert">{error}</p>}
+
       {creando && (
         <section className="pacientes-panel">
           <h2>Nuevo paciente</h2>
 
-          <form className="pacientes-formulario" onSubmit={crearPaciente}>
+          <form
+            className="pacientes-formulario"
+            onSubmit={crearPaciente}
+          >
             <label>
               Nombre
               <input name="nombre" required />
@@ -169,19 +234,36 @@ onGuardarObjetivo={(registro) =>
 
             <label>
               Fecha de nacimiento
-              <input name="fecha_nacimiento" type="date" required />
+              <input
+                name="fecha_nacimiento"
+                type="date"
+                required
+              />
             </label>
 
             <label>
               Inicio del seguimiento
-              <input name="fecha_inicio_seguimiento" type="date" required />
+              <input
+                name="fecha_inicio_seguimiento"
+                type="date"
+                required
+              />
             </label>
 
             <div className="pacientes-acciones">
-              <button type="submit" className="pacientes-boton">
-                Agregar paciente
+              <button
+                type="submit"
+                className="pacientes-boton"
+                disabled={guardando}
+              >
+                {guardando ? "Guardando..." : "Agregar paciente"}
               </button>
-              <button type="button" onClick={() => setCreando(false)}>
+
+              <button
+                type="button"
+                onClick={() => setCreando(false)}
+                disabled={guardando}
+              >
                 Cancelar
               </button>
             </div>
@@ -205,33 +287,40 @@ onGuardarObjetivo={(registro) =>
         />
 
         <div className="pacientes-lista">
+          {cargando && <p>Cargando pacientes...</p>}
 
-{pacientesFiltrados.map((paciente) => (
-  <button
-    type="button"
-    className="pacientes-fila"
-    key={paciente.id}
-    onClick={() => setSeleccionado(paciente)}
-  >
-    <span className="pacientes-avatar">
-      {paciente.nombre[0]}{paciente.apellido[0]}
-    </span>
+          {pacientesFiltrados.map((paciente) => (
+            <button
+              type="button"
+              className="pacientes-fila"
+              key={paciente.id}
+              onClick={() => setSeleccionado(paciente)}
+            >
+              <span className="pacientes-avatar">
+                {paciente.nombre[0]}
+                {paciente.apellido[0]}
+              </span>
 
-    <div className="pacientes-datos">
-      <strong>{paciente.apellido}, {paciente.nombre}</strong>
-      <small>
-        Seguimiento desde {paciente.fecha_inicio_seguimiento.split("-").reverse().join("/")}
-      </small>
-    </div>
+              <div className="pacientes-datos">
+                <strong>
+                  {paciente.apellido}, {paciente.nombre}
+                </strong>
+                <small>
+                  Seguimiento desde{" "}
+                  {paciente.fecha_inicio_seguimiento
+                    .split("-")
+                    .reverse()
+                    .join("/")}
+                </small>
+              </div>
 
-    <span className="pacientes-estado">
-      {paciente.activo ? "Activo" : "Inactivo"}
-    </span>
-  </button>
-))}
+              <span className="pacientes-estado">
+                {paciente.activo ? "Activo" : "Inactivo"}
+              </span>
+            </button>
+          ))}
 
-
-          {pacientesFiltrados.length === 0 && (
+          {!cargando && pacientesFiltrados.length === 0 && (
             <p className="pacientes-vacio">
               {busqueda
                 ? "No se encontraron pacientes."
@@ -242,7 +331,7 @@ onGuardarObjetivo={(registro) =>
       </section>
 
       <p className="pacientes-nota">
-        Para este TFI se utilizará datos ficticios.
+        Para este TFI se utilizarán datos ficticios.
       </p>
     </div>
   );
