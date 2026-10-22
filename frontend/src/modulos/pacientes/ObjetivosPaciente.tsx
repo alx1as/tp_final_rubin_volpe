@@ -7,13 +7,17 @@ export type Objetivo = {
   descripcion: string;
   fecha_inicio: string;
   estado: EstadoObjetivo;
-  fecha_cierre: string;
-  observaciones_generales: string;
+  fecha_cierre: string | null;
+  observaciones_generales: string | null;
 };
+
+export type ObjetivoGuardar = Omit<Objetivo, "id">;
 
 type Props = {
   registros: Objetivo[];
-  onGuardar: (registro: Objetivo) => void;
+  onGuardar: (registro: ObjetivoGuardar, id?: number) => Promise<void>;
+  cargando: boolean;
+  error: string;
 };
 
 const mostrarFecha = (fecha: string) =>
@@ -25,21 +29,22 @@ const etiquetasEstado: Record<EstadoObjetivo, string> = {
   cerrado: "Cerrado sin cumplimiento",
 };
 
-export default function ObjetivosPaciente({ registros, onGuardar }: Props) {
+export default function ObjetivosPaciente({ registros, onGuardar, cargando, error }: Props) {
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
   const [estadoFormulario, setEstadoFormulario] = useState<EstadoObjetivo>("activo");
-  const [error, setError] = useState("");
+  const [errorFormulario, setErrorFormulario] = useState("");
+  const [guardando, setGuardando] = useState(false);
 
   const objetivoActual = registros.find((objetivo) => objetivo.id === editando);
 
   function abrirFormulario(id: number | "nuevo") {
     const registro = registros.find((objetivo) => objetivo.id === id);
     setEstadoFormulario(registro?.estado ?? "activo");
-    setError("");
+    setErrorFormulario("");
     setEditando(id);
   }
 
-  function guardar(evento: FormEvent<HTMLFormElement>) {
+  async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
 
     const datos = new FormData(evento.currentTarget);
@@ -52,31 +57,36 @@ export default function ObjetivosPaciente({ registros, onGuardar }: Props) {
     ).trim();
 
     if (!descripcion || !fecha_inicio) {
-      setError("Completá la descripción y la fecha de inicio.");
+      setErrorFormulario("Completá la descripción y la fecha de inicio.");
       return;
     }
 
     if (estadoFormulario !== "activo" && !fecha_cierre) {
-      setError("Indicá la fecha de cierre del objetivo.");
+      setErrorFormulario("Indicá la fecha de cierre del objetivo.");
       return;
     }
 
     if (fecha_cierre && fecha_cierre < fecha_inicio) {
-      setError("La fecha de cierre no puede ser anterior a la de inicio.");
+      setErrorFormulario("La fecha de cierre no puede ser anterior a la de inicio.");
       return;
     }
 
-    onGuardar({
-      id: typeof editando === "number" ? editando : Date.now(),
-      descripcion,
-      fecha_inicio,
-      estado: estadoFormulario,
-      fecha_cierre,
-      observaciones_generales,
-    });
-
-    setEditando(null);
-    setError("");
+    setGuardando(true);
+    setErrorFormulario("");
+    try {
+      await onGuardar({
+        descripcion,
+        fecha_inicio,
+        estado: estadoFormulario,
+        fecha_cierre: fecha_cierre || null,
+        observaciones_generales: observaciones_generales || null,
+      }, typeof editando === "number" ? editando : undefined);
+      setEditando(null);
+    } catch {
+      // La ficha muestra el error y conservamos el formulario para reintentar.
+    } finally {
+      setGuardando(false);
+    }
   }
 
   return (
@@ -89,13 +99,17 @@ export default function ObjetivosPaciente({ registros, onGuardar }: Props) {
             type="button"
             className="pacientes-boton"
             onClick={() => abrirFormulario("nuevo")}
+          disabled={cargando || guardando}
           >
             + Agregar objetivo
           </button>
         )}
       </div>
 
-      {registros.length === 0 && editando === null && (
+      {cargando && <p className="pacientes-descripcion">Cargando objetivos...</p>}
+      {error && <p role="alert">{error}</p>}
+
+      {!cargando && registros.length === 0 && editando === null && (
         <p className="pacientes-descripcion">
           Todavía no se registraron objetivos.
         </p>
@@ -114,13 +128,13 @@ export default function ObjetivosPaciente({ registros, onGuardar }: Props) {
             )}
           </div>
 
-          <button type="button" onClick={() => abrirFormulario(objetivo.id)}>
+          <button type="button" onClick={() => abrirFormulario(objetivo.id)} disabled={cargando || guardando}>
             Editar
           </button>
         </div>
       ))}
 
-      {editando !== null && (
+      {!cargando && editando !== null && (
         <form
           key={editando}
           className="admision-formulario"
@@ -157,7 +171,7 @@ export default function ObjetivosPaciente({ registros, onGuardar }: Props) {
               value={estadoFormulario}
               onChange={(evento) => {
                 setEstadoFormulario(evento.target.value as EstadoObjetivo);
-                setError("");
+                setErrorFormulario("");
               }}
             >
               <option value="activo">Activo</option>
@@ -187,14 +201,14 @@ export default function ObjetivosPaciente({ registros, onGuardar }: Props) {
             />
           </label>
 
-          {error && <p role="alert">{error}</p>}
+          {errorFormulario && <p role="alert">{errorFormulario}</p>}
 
           <div className="pacientes-acciones">
-            <button type="submit" className="pacientes-boton">
-              Guardar objetivo
+            <button type="submit" className="pacientes-boton" disabled={guardando}>
+              {guardando ? "Guardando..." : "Guardar objetivo"}
             </button>
 
-            <button type="button" onClick={() => setEditando(null)}>
+            <button type="button" onClick={() => setEditando(null)} disabled={guardando}>
               Cancelar
             </button>
           </div>

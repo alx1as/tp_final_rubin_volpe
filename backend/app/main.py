@@ -13,6 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.pacientes import router as pacientes_router
 from app.api.admisiones import router as admisiones_router
 from app.api.escolaridades import router as escolaridades_router
+from app.api.profesionales_tratantes import router as profesionales_tratantes_router
+from app.api.objetivos import router as objetivos_router
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     configuration = settings if settings is not None else load_settings()
@@ -34,6 +36,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(pacientes_router, prefix="/api")
     application.include_router(admisiones_router, prefix="/api")
     application.include_router(escolaridades_router, prefix="/api")
+    application.include_router(profesionales_tratantes_router, prefix="/api")
+    application.include_router(objetivos_router, prefix="/api")
 
         # Permitir solicitudes del frontend durante el desarrollo local.
         # más adelante configuramos los orígenes permitidos para producción.
