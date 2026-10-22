@@ -1,5 +1,6 @@
 import type { Paciente } from "../modulos/pacientes/Pacientes";
 import type { Admision } from "../modulos/pacientes/AdmisionPaciente";
+import type { Escolaridad, EscolaridadGuardar } from "../modulos/pacientes/EscolaridadPaciente";
 
 /* Centraliza la URL y la comunicación con el backend.
 Cuando desarrollemos los endpoints de pacientes, vamos a utilizar esta misma carpeta.*/
@@ -74,6 +75,34 @@ export async function guardarAdmision(
   });
   if (!respuesta.ok) {
     throw new Error(`No se pudo guardar la admisión (HTTP ${respuesta.status})`);
+  }
+  return respuesta.json();
+}
+
+
+// Escolaridad: un paciente puede tener varios períodos escolares.
+export async function listarEscolaridades(pacienteId: number): Promise<Escolaridad[]> {
+  const respuesta = await fetch(`${API_URL}/api/pacientes/${pacienteId}/escolaridades`);
+  if (!respuesta.ok) {
+    throw new Error(`No se pudo cargar la escolaridad (HTTP ${respuesta.status})`);
+  }
+  return respuesta.json();
+}
+
+export async function guardarEscolaridad(
+  pacienteId: number,
+  datos: EscolaridadGuardar,
+  escolaridadId?: number
+): Promise<Escolaridad> {
+  const url = `${API_URL}/api/pacientes/${pacienteId}/escolaridades` +
+    (escolaridadId === undefined ? "" : `/${escolaridadId}`);
+  const respuesta = await fetch(url, {
+    method: escolaridadId === undefined ? "POST" : "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!respuesta.ok) {
+    throw new Error(`No se pudo guardar la escolaridad (HTTP ${respuesta.status})`);
   }
   return respuesta.json();
 }

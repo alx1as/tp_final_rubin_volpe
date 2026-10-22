@@ -7,19 +7,23 @@ export type Escolaridad = {
   nivel: string;
   grado_anio_sala: string;
   modalidad: string;
-  jornada: string;
+  jornada: string | null;
   fecha_inicio: string;
-  fecha_fin: string;
-  apoyos: string;
-  observaciones: string;
-  referente_nombre: string;
-  referente_rol: string;
-  referente_contacto: string;
+  fecha_fin: string | null;
+  apoyos: string | null;
+  observaciones: string | null;
+  referente_nombre: string | null;
+  referente_rol: string | null;
+  referente_contacto: string | null;
 };
+
+export type EscolaridadGuardar = Omit<Escolaridad, "id">;
 
 type Props = {
   registros: Escolaridad[];
-  onGuardar: (registro: Escolaridad) => void;
+  onGuardar: (registro: EscolaridadGuardar, id?: number) => Promise<void>;
+  cargando: boolean;
+  error: string;
 };
 
 type Campo = {
@@ -44,32 +48,47 @@ const campos: Campo[] = [
   { nombre: "referente_contacto", etiqueta: "Contacto del referente" },
 ];
 
-export default function EscolaridadPaciente({ registros, onGuardar }: Props) {
+export default function EscolaridadPaciente({ registros, onGuardar, cargando, error }: Props) {
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [errorFormulario, setErrorFormulario] = useState("");
 
   const actual = registros.find((registro) => registro.id === editando);
 
-  function guardar(evento: FormEvent<HTMLFormElement>) {
+  function iniciarEdicion(id: number | "nuevo") {
+    setErrorFormulario("");
+    setEditando(id);
+  }
+
+  async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
 
     const formulario = new FormData(evento.currentTarget);
-
     const valores = Object.fromEntries(
       campos.map((campo) => [
         campo.nombre,
         String(formulario.get(campo.nombre) ?? "").trim(),
       ])
-    ) as Omit<Escolaridad, "id">;
+    ) as EscolaridadGuardar;
 
-    onGuardar({
-      id: typeof editando === "number" ? editando : Date.now(),
-      ...valores,
-    });
+    if (valores.fecha_fin && valores.fecha_fin < valores.fecha_inicio) {
+      setErrorFormulario("La fecha de finalización no puede ser anterior al inicio.");
+      return;
+    }
 
-    setEditando(null);
+    setGuardando(true);
+    setErrorFormulario("");
+    try {
+      await onGuardar(valores, typeof editando === "number" ? editando : undefined);
+      setEditando(null);
+    } catch {
+      // La ficha muestra el error y conservamos los datos del formulario.
+    } finally {
+      setGuardando(false);
+    }
   }
 
-  const fecha = (valor: string) =>
+  const fecha = (valor: string | null) =>
     valor ? valor.split("-").reverse().join("/") : "Actual";
 
   return (
@@ -77,18 +96,21 @@ export default function EscolaridadPaciente({ registros, onGuardar }: Props) {
       <div className="admision-cabecera">
         <h2>Escolaridad</h2>
 
-        {editando === null && (
+        {!cargando && editando === null && (
           <button
             type="button"
             className="pacientes-boton"
-            onClick={() => setEditando("nuevo")}
+            onClick={() => iniciarEdicion("nuevo")}
           >
             + Agregar período
           </button>
         )}
       </div>
 
-      {registros.length === 0 && editando === null && (
+      {cargando && <p className="pacientes-descripcion">Cargando escolaridad...</p>}
+      {error && <p role="alert">{error}</p>}
+
+      {!cargando && registros.length === 0 && editando === null && (
         <p className="pacientes-descripcion">
           Todavía no se registraron períodos escolares.
         </p>
@@ -108,14 +130,14 @@ export default function EscolaridadPaciente({ registros, onGuardar }: Props) {
 
           <button
             type="button"
-            onClick={() => setEditando(registro.id)}
+            onClick={() => iniciarEdicion(registro.id)}
           >
             Editar
           </button>
         </div>
       ))}
 
-      {editando !== null && (
+      {!cargando && editando !== null && (
         <form
           key={editando}
           className="admision-formulario"
@@ -144,12 +166,14 @@ export default function EscolaridadPaciente({ registros, onGuardar }: Props) {
             </label>
           ))}
 
+          {errorFormulario && <p role="alert">{errorFormulario}</p>}
+
           <div className="pacientes-acciones">
-            <button type="submit" className="pacientes-boton">
-              Guardar escolaridad
+            <button type="submit" className="pacientes-boton" disabled={guardando}>
+              {guardando ? "Guardando..." : "Guardar escolaridad"}
             </button>
 
-            <button type="button" onClick={() => setEditando(null)}>
+            <button type="button" onClick={() => setEditando(null)} disabled={guardando}>
               Cancelar
             </button>
           </div>

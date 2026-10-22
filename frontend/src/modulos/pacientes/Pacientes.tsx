@@ -8,7 +8,6 @@ import {
 
 import "./Pacientes.css";
 import FichaPaciente from "./FichaPaciente";
-import type { Escolaridad } from "./EscolaridadPaciente";
 import type { ProfesionalTratante } from "./ProfesionalesIntervinientes";
 import type { Objetivo } from "./ObjetivosPaciente";
 
@@ -32,10 +31,6 @@ export default function Pacientes() {
   const [error, setError] = useState("");
 
   // Datos de los módulos de seguimiento.
-  const [escolaridades, setEscolaridades] = useState<
-    Record<number, Escolaridad[]>
-  >({});
-
   const [profesionales, setProfesionales] = useState<
     Record<number, ProfesionalTratante[]>
   >({});
@@ -122,24 +117,6 @@ export default function Pacientes() {
     return (
       <FichaPaciente
         paciente={seleccionado}
-        escolaridades={escolaridades[seleccionado.id] ?? []}
-        onGuardarEscolaridad={(registro) =>
-          setEscolaridades((actuales) => {
-            const registros = actuales[seleccionado.id] ?? [];
-            const existe = registros.some(
-              (item) => item.id === registro.id
-            );
-
-            return {
-              ...actuales,
-              [seleccionado.id]: existe
-                ? registros.map((item) =>
-                    item.id === registro.id ? registro : item
-                  )
-                : [...registros, registro],
-            };
-          })
-        }
         profesionales={profesionales[seleccionado.id] ?? []}
         onGuardarProfesional={(registro) =>
           setProfesionales((actuales) => {
