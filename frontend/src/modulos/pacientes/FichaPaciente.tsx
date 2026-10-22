@@ -1,17 +1,15 @@
 import { useEffect, useState } from "react";
-import { obtenerAdmision, guardarAdmision } from "../../servicios/api";
+import { obtenerAdmision, guardarAdmision, listarEscolaridades, guardarEscolaridad } from "../../servicios/api";
 
 import type { Paciente } from "./Pacientes";
 import AdmisionPaciente, { type Admision } from "./AdmisionPaciente";
-import EscolaridadPaciente, { type Escolaridad } from "./EscolaridadPaciente";
+import EscolaridadPaciente, { type Escolaridad, type EscolaridadGuardar } from "./EscolaridadPaciente";
 import ProfesionalesIntervinientes, { type ProfesionalTratante } from "./ProfesionalesIntervinientes";
 import ObjetivosPaciente, { type Objetivo } from "./ObjetivosPaciente";
 
 type Props = {
   paciente: Paciente;
   onVolver: () => void;
-  escolaridades: Escolaridad[];
-onGuardarEscolaridad: (registro: Escolaridad) => void;
 profesionales: ProfesionalTratante[];
 onGuardarProfesional: (registro: ProfesionalTratante) => void;
 objetivos: Objetivo[];
@@ -21,8 +19,6 @@ onGuardarObjetivo: (registro: Objetivo) => void;
 export default function FichaPaciente({
   paciente,
   onVolver,
-  escolaridades,
-  onGuardarEscolaridad,
   profesionales,
 onGuardarProfesional,
 objetivos,
@@ -31,6 +27,9 @@ onGuardarObjetivo,
   const [admision, setAdmision] = useState<Admision | null>(null);
   const [cargandoAdmision, setCargandoAdmision] = useState(true);
   const [errorAdmision, setErrorAdmision] = useState("");
+  const [escolaridades, setEscolaridades] = useState<Escolaridad[]>([]);
+  const [cargandoEscolaridad, setCargandoEscolaridad] = useState(true);
+  const [errorEscolaridad, setErrorEscolaridad] = useState("");
 
   useEffect(() => {
     let vigente = true;
@@ -56,6 +55,51 @@ onGuardarObjetivo,
       vigente = false;
     };
   }, [paciente.id]);
+
+  useEffect(() => {
+    let vigente = true;
+    setCargandoEscolaridad(true);
+    setErrorEscolaridad("");
+    setEscolaridades([]);
+
+    listarEscolaridades(paciente.id)
+      .then((datos) => {
+        if (vigente) setEscolaridades(datos);
+      })
+      .catch((fallo) => {
+        if (vigente) {
+          setErrorEscolaridad(
+            fallo instanceof Error ? fallo.message : "No se pudo cargar la escolaridad."
+          );
+        }
+      })
+      .finally(() => {
+        if (vigente) setCargandoEscolaridad(false);
+      });
+
+    return () => {
+      vigente = false;
+    };
+  }, [paciente.id]);
+
+  async function guardarEscolaridadPaciente(
+    datos: EscolaridadGuardar, id?: number
+  ): Promise<void> {
+    setErrorEscolaridad("");
+    try {
+      const guardado = await guardarEscolaridad(paciente.id, datos, id);
+      setEscolaridades((actuales) =>
+        id === undefined
+          ? [guardado, ...actuales]
+          : actuales.map((registro) => registro.id === guardado.id ? guardado : registro)
+      );
+    } catch (fallo) {
+      setErrorEscolaridad(
+        fallo instanceof Error ? fallo.message : "No se pudo guardar la escolaridad."
+      );
+      throw fallo;
+    }
+  }
 
   async function guardarAdmisionPaciente(datos: Admision): Promise<void> {
     setErrorAdmision("");
@@ -132,9 +176,11 @@ onGuardarObjetivo,
       />
 
       <EscolaridadPaciente
-  registros={escolaridades}
-  onGuardar={onGuardarEscolaridad}
-/>
+        registros={escolaridades}
+        onGuardar={guardarEscolaridadPaciente}
+        cargando={cargandoEscolaridad}
+        error={errorEscolaridad}
+      />
 
       <section className="pacientes-panel">
         <h2>Profesionales intervinientes</h2>
