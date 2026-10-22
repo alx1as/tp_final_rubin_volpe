@@ -1,6 +1,8 @@
 import type { Paciente } from "../modulos/pacientes/Pacientes";
 import type { Admision } from "../modulos/pacientes/AdmisionPaciente";
 import type { Escolaridad, EscolaridadGuardar } from "../modulos/pacientes/EscolaridadPaciente";
+import type { ProfesionalTratante, ProfesionalTratanteGuardar } from "../modulos/pacientes/ProfesionalesIntervinientes";
+import type { Objetivo, ObjetivoGuardar } from "../modulos/pacientes/ObjetivosPaciente";
 
 /* Centraliza la URL y la comunicación con el backend.
 Cuando desarrollemos los endpoints de pacientes, vamos a utilizar esta misma carpeta.*/
@@ -103,6 +105,62 @@ export async function guardarEscolaridad(
   });
   if (!respuesta.ok) {
     throw new Error(`No se pudo guardar la escolaridad (HTTP ${respuesta.status})`);
+  }
+  return respuesta.json();
+}
+
+
+// Profesionales externos vinculados a un paciente (no son usuarios de acceso).
+export async function listarProfesionalesTratantes(pacienteId: number): Promise<ProfesionalTratante[]> {
+  const respuesta = await fetch(`${API_URL}/api/pacientes/${pacienteId}/profesionales-tratantes`);
+  if (!respuesta.ok) {
+    throw new Error(`No se pudieron cargar los profesionales (HTTP ${respuesta.status})`);
+  }
+  return respuesta.json();
+}
+
+export async function guardarProfesionalTratante(
+  pacienteId: number,
+  datos: ProfesionalTratanteGuardar,
+  profesionalId?: number
+): Promise<ProfesionalTratante> {
+  const url = `${API_URL}/api/pacientes/${pacienteId}/profesionales-tratantes` +
+    (profesionalId === undefined ? "" : `/${profesionalId}`);
+  const respuesta = await fetch(url, {
+    method: profesionalId === undefined ? "POST" : "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!respuesta.ok) {
+    throw new Error(`No se pudo guardar el profesional (HTTP ${respuesta.status})`);
+  }
+  return respuesta.json();
+}
+
+
+// Objetivos: múltiples registros de seguimiento por paciente.
+export async function listarObjetivos(pacienteId: number): Promise<Objetivo[]> {
+  const respuesta = await fetch(`${API_URL}/api/pacientes/${pacienteId}/objetivos`);
+  if (!respuesta.ok) {
+    throw new Error(`No se pudieron cargar los objetivos (HTTP ${respuesta.status})`);
+  }
+  return respuesta.json();
+}
+
+export async function guardarObjetivo(
+  pacienteId: number,
+  datos: ObjetivoGuardar,
+  objetivoId?: number
+): Promise<Objetivo> {
+  const url = `${API_URL}/api/pacientes/${pacienteId}/objetivos` +
+    (objetivoId === undefined ? "" : `/${objetivoId}`);
+  const respuesta = await fetch(url, {
+    method: objetivoId === undefined ? "POST" : "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+  if (!respuesta.ok) {
+    throw new Error(`No se pudo guardar el objetivo (HTTP ${respuesta.status})`);
   }
   return respuesta.json();
 }

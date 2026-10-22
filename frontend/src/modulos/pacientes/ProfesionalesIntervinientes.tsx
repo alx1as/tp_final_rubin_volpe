@@ -4,19 +4,23 @@ export type ProfesionalTratante = {
   id: number;
   nombre: string;
   especialidad: string;
-  contacto: string;
+  contacto: string | null;
   fecha_inicio: string;
-  fecha_fin: string;
-  observaciones: string;
+  fecha_fin: string | null;
+  observaciones: string | null;
 };
+
+export type ProfesionalTratanteGuardar = Omit<ProfesionalTratante, "id">;
 
 type Props = {
   registros: ProfesionalTratante[];
-  onGuardar: (registro: ProfesionalTratante) => void;
+  onGuardar: (registro: ProfesionalTratanteGuardar, id?: number) => Promise<void>;
+  cargando: boolean;
+  error: string;
 };
 
 type Campo = {
-  nombre: keyof Omit<ProfesionalTratante, "id">;
+  nombre: keyof ProfesionalTratanteGuardar;
   etiqueta: string;
   tipo?: "date" | "textarea";
   requerido?: boolean;
@@ -31,44 +35,46 @@ const campos: Campo[] = [
   { nombre: "observaciones", etiqueta: "Observaciones", tipo: "textarea" },
 ];
 
-export default function ProfesionalesIntervinientes({ registros, onGuardar }: Props) {
+export default function ProfesionalesIntervinientes({ registros, onGuardar, cargando, error }: Props) {
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
-  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [errorFormulario, setErrorFormulario] = useState("");
 
   const actual = registros.find((registro) => registro.id === editando);
 
   function abrirFormulario(id: number | "nuevo") {
-    setError("");
+    setErrorFormulario("");
     setEditando(id);
   }
 
-  function guardar(evento: FormEvent<HTMLFormElement>) {
+  async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-
     const formulario = new FormData(evento.currentTarget);
-
     const valores = Object.fromEntries(
       campos.map((campo) => [
         campo.nombre,
         String(formulario.get(campo.nombre) ?? "").trim(),
       ])
-    ) as Omit<ProfesionalTratante, "id">;
+    ) as ProfesionalTratanteGuardar;
 
     if (valores.fecha_fin && valores.fecha_fin < valores.fecha_inicio) {
-      setError("La fecha de finalización no puede ser anterior al inicio.");
+      setErrorFormulario("La fecha de finalización no puede ser anterior al inicio.");
       return;
     }
 
-    onGuardar({
-      id: typeof editando === "number" ? editando : Date.now(),
-      ...valores,
-    });
-
-    setError("");
-    setEditando(null);
+    setGuardando(true);
+    setErrorFormulario("");
+    try {
+      await onGuardar(valores, typeof editando === "number" ? editando : undefined);
+      setEditando(null);
+    } catch {
+      // La ficha muestra el error; conservamos el formulario para reintentar.
+    } finally {
+      setGuardando(false);
+    }
   }
 
-  const fecha = (valor: string) =>
+  const fecha = (valor: string | null) =>
     valor ? valor.split("-").reverse().join("/") : "Actual";
 
   return (
@@ -76,7 +82,7 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar }: Pr
       <div className="admision-cabecera">
         <h2>Profesionales intervinientes</h2>
 
-        {editando === null && (
+        {!cargando && editando === null && (
           <button
             type="button"
             className="pacientes-boton"
@@ -87,7 +93,10 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar }: Pr
         )}
       </div>
 
-      {registros.length === 0 && editando === null && (
+      {cargando && <p className="pacientes-descripcion">Cargando profesionales...</p>}
+      {error && <p role="alert">{error}</p>}
+
+      {!cargando && registros.length === 0 && editando === null && (
         <p className="pacientes-descripcion">
           Todavía no se registraron profesionales externos.
         </p>
@@ -97,43 +106,29 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar }: Pr
         <div className="interviniente-registro" key={registro.id}>
           <div>
             <strong>{registro.nombre}</strong>
-
             <p>
               {registro.especialidad} · {fecha(registro.fecha_inicio)} — {fecha(registro.fecha_fin)}
             </p>
-
-            {registro.contacto && (
-              <p>Contacto: {registro.contacto}</p>
-            )}
-
-            {registro.observaciones && (
-              <p>Observaciones: {registro.observaciones}</p>
-            )}
+            {registro.contacto && <p>Contacto: {registro.contacto}</p>}
+            {registro.observaciones && <p>Observaciones: {registro.observaciones}</p>}
           </div>
-
           <button
             type="button"
             onClick={() => abrirFormulario(registro.id)}
+            disabled={guardando || cargando}
           >
             Editar
           </button>
         </div>
       ))}
 
-      {editando !== null && (
-        <form
-          key={editando}
-          className="admision-formulario"
-          onSubmit={guardar}
-        >
-          <h3>
-            {editando === "nuevo" ? "Nuevo profesional" : "Editar profesional"}
-          </h3>
+      {!cargando && editando !== null && (
+        <form key={editando} className="admision-formulario" onSubmit={guardar}>
+          <h3>{editando === "nuevo" ? "Nuevo profesional" : "Editar profesional"}</h3>
 
           {campos.map((campo) => (
             <label key={campo.nombre}>
               {campo.etiqueta}
-
               {campo.tipo === "textarea" ? (
                 <textarea
                   name={campo.nombre}
@@ -151,17 +146,13 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar }: Pr
             </label>
           ))}
 
-          {error && <p role="alert">{error}</p>}
+          {errorFormulario && <p role="alert">{errorFormulario}</p>}
 
           <div className="pacientes-acciones">
-            <button type="submit" className="pacientes-boton">
-              Guardar profesional
+            <button type="submit" className="pacientes-boton" disabled={guardando}>
+              {guardando ? "Guardando..." : "Guardar profesional"}
             </button>
-
-            <button
-              type="button"
-              onClick={() => setEditando(null)}
-            >
+            <button type="button" onClick={() => setEditando(null)} disabled={guardando}>
               Cancelar
             </button>
           </div>

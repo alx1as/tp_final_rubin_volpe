@@ -8,8 +8,6 @@ import {
 
 import "./Pacientes.css";
 import FichaPaciente from "./FichaPaciente";
-import type { ProfesionalTratante } from "./ProfesionalesIntervinientes";
-import type { Objetivo } from "./ObjetivosPaciente";
 
 export type Paciente = {
   id: number;
@@ -29,15 +27,6 @@ export default function Pacientes() {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
-
-  // Datos de los módulos de seguimiento.
-  const [profesionales, setProfesionales] = useState<
-    Record<number, ProfesionalTratante[]>
-  >({});
-
-  const [objetivos, setObjetivos] = useState<
-    Record<number, Objetivo[]>
-  >({});
 
   // Cargar pacientes desde PostgreSQL al abrir la pantalla.
   useEffect(() => {
@@ -117,42 +106,6 @@ export default function Pacientes() {
     return (
       <FichaPaciente
         paciente={seleccionado}
-        profesionales={profesionales[seleccionado.id] ?? []}
-        onGuardarProfesional={(registro) =>
-          setProfesionales((actuales) => {
-            const registros = actuales[seleccionado.id] ?? [];
-            const existe = registros.some(
-              (item) => item.id === registro.id
-            );
-
-            return {
-              ...actuales,
-              [seleccionado.id]: existe
-                ? registros.map((item) =>
-                    item.id === registro.id ? registro : item
-                  )
-                : [...registros, registro],
-            };
-          })
-        }
-        objetivos={objetivos[seleccionado.id] ?? []}
-        onGuardarObjetivo={(registro) =>
-          setObjetivos((actuales) => {
-            const registros = actuales[seleccionado.id] ?? [];
-            const existe = registros.some(
-              (item) => item.id === registro.id
-            );
-
-            return {
-              ...actuales,
-              [seleccionado.id]: existe
-                ? registros.map((item) =>
-                    item.id === registro.id ? registro : item
-                  )
-                : [...registros, registro],
-            };
-          })
-        }
         onVolver={() => setSeleccionado(null)}
       />
     );

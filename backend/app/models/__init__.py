@@ -4,3 +4,5 @@ from .paciente import Paciente
 from .admision import Admision
 
 from .escolaridad import Escolaridad
+from .profesional_tratante import ProfesionalTratante
+from .objetivo import Objetivo

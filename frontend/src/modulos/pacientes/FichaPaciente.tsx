@@ -1,28 +1,20 @@
 import { useEffect, useState } from "react";
-import { obtenerAdmision, guardarAdmision, listarEscolaridades, guardarEscolaridad } from "../../servicios/api";
+import { obtenerAdmision, guardarAdmision, listarEscolaridades, guardarEscolaridad, listarProfesionalesTratantes, guardarProfesionalTratante, listarObjetivos, guardarObjetivo } from "../../servicios/api";
 
 import type { Paciente } from "./Pacientes";
 import AdmisionPaciente, { type Admision } from "./AdmisionPaciente";
 import EscolaridadPaciente, { type Escolaridad, type EscolaridadGuardar } from "./EscolaridadPaciente";
-import ProfesionalesIntervinientes, { type ProfesionalTratante } from "./ProfesionalesIntervinientes";
-import ObjetivosPaciente, { type Objetivo } from "./ObjetivosPaciente";
+import ProfesionalesIntervinientes, { type ProfesionalTratante, type ProfesionalTratanteGuardar } from "./ProfesionalesIntervinientes";
+import ObjetivosPaciente, { type Objetivo, type ObjetivoGuardar } from "./ObjetivosPaciente";
 
 type Props = {
   paciente: Paciente;
   onVolver: () => void;
-profesionales: ProfesionalTratante[];
-onGuardarProfesional: (registro: ProfesionalTratante) => void;
-objetivos: Objetivo[];
-onGuardarObjetivo: (registro: Objetivo) => void;
 };
 
 export default function FichaPaciente({
   paciente,
   onVolver,
-  profesionales,
-onGuardarProfesional,
-objetivos,
-onGuardarObjetivo,
 }: Props) {
   const [admision, setAdmision] = useState<Admision | null>(null);
   const [cargandoAdmision, setCargandoAdmision] = useState(true);
@@ -30,6 +22,12 @@ onGuardarObjetivo,
   const [escolaridades, setEscolaridades] = useState<Escolaridad[]>([]);
   const [cargandoEscolaridad, setCargandoEscolaridad] = useState(true);
   const [errorEscolaridad, setErrorEscolaridad] = useState("");
+  const [profesionales, setProfesionales] = useState<ProfesionalTratante[]>([]);
+  const [cargandoProfesionales, setCargandoProfesionales] = useState(true);
+  const [errorProfesionales, setErrorProfesionales] = useState("");
+  const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
+  const [cargandoObjetivos, setCargandoObjetivos] = useState(true);
+  const [errorObjetivos, setErrorObjetivos] = useState("");
 
   useEffect(() => {
     let vigente = true;
@@ -81,6 +79,86 @@ onGuardarObjetivo,
       vigente = false;
     };
   }, [paciente.id]);
+
+  useEffect(() => {
+    let vigente = true;
+    setCargandoProfesionales(true);
+    setErrorProfesionales("");
+    setProfesionales([]);
+
+    listarProfesionalesTratantes(paciente.id)
+      .then((datos) => {
+        if (vigente) setProfesionales(datos);
+      })
+      .catch((fallo) => {
+        if (vigente) {
+          setErrorProfesionales(
+            fallo instanceof Error ? fallo.message : "No se pudieron cargar los profesionales."
+          );
+        }
+      })
+      .finally(() => {
+        if (vigente) setCargandoProfesionales(false);
+      });
+
+    return () => { vigente = false; };
+  }, [paciente.id]);
+
+  useEffect(() => {
+    let vigente = true;
+    setCargandoObjetivos(true);
+    setErrorObjetivos("");
+    setObjetivos([]);
+
+    listarObjetivos(paciente.id)
+      .then((datos) => {
+        if (vigente) setObjetivos(datos);
+      })
+      .catch((fallo) => {
+        if (vigente) setErrorObjetivos(
+          fallo instanceof Error ? fallo.message : "No se pudieron cargar los objetivos."
+        );
+      })
+      .finally(() => { if (vigente) setCargandoObjetivos(false); });
+
+    return () => { vigente = false; };
+  }, [paciente.id]);
+
+  async function guardarObjetivoPaciente(datos: ObjetivoGuardar, id?: number): Promise<void> {
+    setErrorObjetivos("");
+    try {
+      const guardado = await guardarObjetivo(paciente.id, datos, id);
+      setObjetivos((actuales) =>
+        id === undefined
+          ? [guardado, ...actuales]
+          : actuales.map((registro) => registro.id === guardado.id ? guardado : registro)
+      );
+    } catch (fallo) {
+      setErrorObjetivos(
+        fallo instanceof Error ? fallo.message : "No se pudo guardar el objetivo."
+      );
+      throw fallo;
+    }
+  }
+
+  async function guardarProfesionalPaciente(
+    datos: ProfesionalTratanteGuardar, id?: number
+  ): Promise<void> {
+    setErrorProfesionales("");
+    try {
+      const guardado = await guardarProfesionalTratante(paciente.id, datos, id);
+      setProfesionales((actuales) =>
+        id === undefined
+          ? [guardado, ...actuales]
+          : actuales.map((registro) => registro.id === guardado.id ? guardado : registro)
+      );
+    } catch (fallo) {
+      setErrorProfesionales(
+        fallo instanceof Error ? fallo.message : "No se pudo guardar el profesional."
+      );
+      throw fallo;
+    }
+  }
 
   async function guardarEscolaridadPaciente(
     datos: EscolaridadGuardar, id?: number
@@ -182,19 +260,19 @@ onGuardarObjetivo,
         error={errorEscolaridad}
       />
 
-      <section className="pacientes-panel">
-        <h2>Profesionales intervinientes</h2>
-        <p className="pacientes-descripcion">
-        <ProfesionalesIntervinientes
-  registros={profesionales}
-  onGuardar={onGuardarProfesional}
-/>
+      <ProfesionalesIntervinientes
+        registros={profesionales}
+        onGuardar={guardarProfesionalPaciente}
+        cargando={cargandoProfesionales}
+        error={errorProfesionales}
+      />
+
       <ObjetivosPaciente
-  registros={objetivos}
-  onGuardar={onGuardarObjetivo}
-/>
-        </p>
-      </section>
+        registros={objetivos}
+        onGuardar={guardarObjetivoPaciente}
+        cargando={cargandoObjetivos}
+        error={errorObjetivos}
+      />
     </div>
   );
 }
