@@ -1,14 +1,17 @@
 """Profesionales externos asociados a pacientes de la profesional actual."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from sqlmodel import select
 
-from app.api.dependencies import ProfesionalActual, SesionDB
-from app.models import Paciente, ProfesionalTratante
+from app.api.dependencies import PacienteAutorizado, ParametrosPagina, SesionDB
+from app.models import ProfesionalTratante
+from app.schemas.comun import Pagina
 from app.schemas.profesional_tratante import (
+    ProfesionalTratanteEditar,
     ProfesionalTratanteGuardar,
     ProfesionalTratanteRespuesta,
 )
+from app.services.perfil import buscar_hijo, editar, guardar, paginar
 
 
 router = APIRouter(
@@ -17,61 +20,54 @@ router = APIRouter(
 )
 
 
-def verificar_paciente(paciente_id: int, session: SesionDB, profesional: ProfesionalActual) -> None:
-    paciente = session.get(Paciente, paciente_id)
-    if paciente is None or paciente.profesional_id != profesional.id:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-
-
-@router.get("", response_model=list[ProfesionalTratanteRespuesta])
+@router.get("", response_model=Pagina[ProfesionalTratanteRespuesta])
 def listar_profesionales(
-    paciente_id: int,
+    paciente: PacienteAutorizado,
     session: SesionDB,
-    profesional: ProfesionalActual,
+    pagina: ParametrosPagina,
 ):
-    verificar_paciente(paciente_id, session, profesional)
-    return session.exec(
+    consulta = (
         select(ProfesionalTratante)
-        .where(ProfesionalTratante.paciente_id == paciente_id)
+        .where(ProfesionalTratante.paciente_id == paciente.id)
         .order_by(ProfesionalTratante.fecha_inicio.desc(), ProfesionalTratante.id.desc())
-    ).all()
+    )
+    return paginar(session, consulta, pagina)
 
 
 @router.post("", response_model=ProfesionalTratanteRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_profesional(
-    paciente_id: int,
     datos: ProfesionalTratanteGuardar,
+    paciente: PacienteAutorizado,
     session: SesionDB,
-    profesional: ProfesionalActual,
 ):
-    verificar_paciente(paciente_id, session, profesional)
-    registro = ProfesionalTratante(paciente_id=paciente_id, **datos.model_dump())
-    session.add(registro)
-    session.commit()
-    session.refresh(registro)
-    return registro
+    registro = ProfesionalTratante(paciente_id=paciente.id, **datos.model_dump())
+    return guardar(session, registro)
 
 
-@router.put("/{profesional_tratante_id}", response_model=ProfesionalTratanteRespuesta)
+@router.put("/{profesional_tratante_id}", response_model=ProfesionalTratanteRespuesta, deprecated=True)
 def editar_profesional(
-    paciente_id: int,
     profesional_tratante_id: int,
     datos: ProfesionalTratanteGuardar,
+    paciente: PacienteAutorizado,
     session: SesionDB,
-    profesional: ProfesionalActual,
 ):
-    verificar_paciente(paciente_id, session, profesional)
-    registro = session.exec(
-        select(ProfesionalTratante).where(
-            ProfesionalTratante.id == profesional_tratante_id,
-            ProfesionalTratante.paciente_id == paciente_id,
-        )
-    ).first()
-    if registro is None:
-        raise HTTPException(status_code=404, detail="Profesional interviniente no encontrado")
+    registro = buscar_hijo(session, ProfesionalTratante, paciente.id, profesional_tratante_id)
     for campo, valor in datos.model_dump().items():
         setattr(registro, campo, valor)
-    session.add(registro)
-    session.commit()
-    session.refresh(registro)
-    return registro
+    return guardar(session, registro)
+
+
+@router.get("/{profesional_tratante_id}", response_model=ProfesionalTratanteRespuesta)
+def consultar_profesional(
+    profesional_tratante_id: int, paciente: PacienteAutorizado, session: SesionDB,
+):
+    return buscar_hijo(session, ProfesionalTratante, paciente.id, profesional_tratante_id)
+
+
+@router.patch("/{profesional_tratante_id}", response_model=ProfesionalTratanteRespuesta)
+def actualizar_profesional(
+    profesional_tratante_id: int, datos: ProfesionalTratanteEditar,
+    paciente: PacienteAutorizado, session: SesionDB,
+):
+    registro = buscar_hijo(session, ProfesionalTratante, paciente.id, profesional_tratante_id)
+    return editar(session, registro, datos, ProfesionalTratanteGuardar)

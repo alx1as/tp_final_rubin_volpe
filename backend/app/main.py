@@ -15,8 +15,10 @@ from app.api.auth import router as auth_router
 from app.api.escolaridades import router as escolaridades_router
 from app.api.health import router as health_router
 from app.api.objetivos import router as objetivos_router
+from app.api.observaciones import router as observaciones_router
 from app.api.pacientes import router as pacientes_router
 from app.api.profesionales_tratantes import router as profesionales_tratantes_router
+from app.api.sesiones import router as sesiones_router
 from app.core.config import Settings, load_settings
 from app.core.origins import ValidateOriginMiddleware
 from app.db.session import build_engine
@@ -45,6 +47,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(escolaridades_router, prefix="/api")
     application.include_router(profesionales_tratantes_router, prefix="/api")
     application.include_router(objetivos_router, prefix="/api")
+    application.include_router(sesiones_router, prefix="/api")
+    application.include_router(observaciones_router, prefix="/api")
 
     @application.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError):

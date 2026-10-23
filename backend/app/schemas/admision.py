@@ -1,14 +1,14 @@
 """Datos recibidos y devueltos por la API de admision."""
 
-from datetime import date
-
 from pydantic import BaseModel, ConfigDict, field_validator
+
+from app.schemas.comun import FechaDominio
 
 
 class AdmisionGuardar(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    fecha: date
+    fecha: FechaDominio
     motivo_consulta: str
     antecedentes_personales: str | None = None
     antecedentes_evolutivos: str | None = None

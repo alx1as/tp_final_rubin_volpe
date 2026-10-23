@@ -57,7 +57,90 @@ Invoke-RestMethod http://127.0.0.1:8000/api/pacientes -WebSession $sesionApi
 Invoke-RestMethod http://127.0.0.1:8000/api/auth/logout -Method Post -WebSession $sesionApi
 ```
 
-El frontend actual todavía no incorpora registro/login/logout ni envía `credentials: "include"`. Sus solicitudes de dominio recibirán `401` hasta realizar esa adaptación coordinada. Esta etapa agrega autenticación al backend; la adaptación del cliente se mantiene en trabajo separado. En desarrollo, usar el mismo nombre de host para ambas aplicaciones (por ejemplo, `127.0.0.1` en ambas), conforme a la cookie `SameSite=Lax`. Los arrays, métodos PUT y respuestas de admisión actuales se conservan para una conciliación posterior de contratos.
+El frontend actual todavía no incorpora registro/login/logout ni envía `credentials: "include"`. Sus solicitudes de dominio recibirán `401` hasta que su responsable realice esa adaptación externa. El alcance de este trabajo es solo backend. En desarrollo, usar el mismo nombre de host para ambas aplicaciones (por ejemplo, `127.0.0.1` en ambas), conforme a la cookie `SameSite=Lax`. Los contratos del perfil y su transición están en [CONTRATOS.md](CONTRATOS.md).
+
+## Pacientes y perfil
+
+Todas estas rutas requieren sesión y limitan los datos al profesional autenticado.
+`P` representa `/api/pacientes/{paciente_id}`; un recurso ajeno, inexistente o
+perteneciente a otro paciente de la ruta responde `404`.
+
+| Métodos | Ruta | Resultado |
+| --- | --- | --- |
+| GET, POST | `/api/pacientes` | Lista paginada o creación con `201`. |
+| GET, PATCH | `P` | Consultar/editar; `activo=false` desactiva sin borrar historial. |
+| GET, PUT | `P/admision` | Ausente: `404`; crear: `201`; reemplazar: `200`, conservando ID y admisión única. |
+| GET, POST | `P/escolaridades` | Lista paginada o creación con `201`; admite varias vigentes. |
+| GET, PATCH | `P/escolaridades/{escolaridad_id}` | Consulta o edición parcial. |
+| GET, POST | `P/profesionales-tratantes` | Lista paginada o creación con `201`; no crea cuentas ni permisos. |
+| GET, PATCH | `P/profesionales-tratantes/{profesional_tratante_id}` | Consulta o edición parcial. |
+
+Las listas de pacientes, escolaridades y contactos devuelven siempre
+`{"items": [], "total": 0, "offset": 0, "limit": 20}` con sus valores reales.
+`offset` es no negativo y `limit` va de 1 a 100 (por defecto 20). `total` cuenta
+solo los datos autorizados antes de paginar. Pacientes ordena apellido/nombre/ID
+ascendentes e incluye inactivos; períodos y contactos, inicio/ID descendentes.
+
+Los cuerpos usan snake_case y fechas `YYYY-MM-DD`. La API genera identidad y
+pertenencia desde PostgreSQL/sesión/ruta; no acepta IDs ni reasignaciones en los
+cuerpos. PATCH conserva campos omitidos, permite null solo en opcionales y
+valida el registro completo resultante antes de modificarlo. Un PATCH vacío no
+cambia datos. Texto obligatorio se recorta y no admite vacío; texto opcional
+vacío y fecha final vacía se convierten a null. Las fechas respetan el orden
+del SQL. Una edición inválida responde 422 y conserva los datos previos.
+
+Los PUT individuales de escolaridades/contactos se conservan para reemplazo
+completo, marcados como deprecados en OpenAPI. Los opcionales omitidos en PUT
+quedan en null; no tienen semántica parcial. No hay DELETE de dominio. Las
+escrituras revierten ante errores y los conflictos de integridad responden 409
+sin SQL ni datos recibidos. La creación concurrente de la misma admisión
+mantiene un único registro.
+
+Las pruebas del perfil y la adaptación requerida de consumidores externos se
+describen en [CONTRATOS.md](CONTRATOS.md); este trabajo no modifica el frontend.
+
+## Objetivos
+
+`GET P/objetivos` devuelve la misma página `items/total/offset/limit` del perfil,
+ordenada por fecha de inicio e ID descendentes. `POST` crea con 201;
+`GET/PATCH P/objetivos/{objetivo_id}` consultan/editan el objetivo del paciente
+autorizado. El PUT anterior se conserva deprecado para reemplazo completo.
+
+Estados: `activo`, `cumplido`, `cerrado`. Un activo no tiene fecha de cierre;
+los otros estados requieren cierre no anterior al inicio. Para cerrar, enviar
+estado y fecha en el mismo PATCH; para reabrir, `estado=activo` y
+`fecha_cierre=null`. Se valida el registro completo antes de escribir y la
+transición se guarda en una transacción. Los campos omitidos conservan valor;
+los opcionales vacíos pasan a null. No hay reasignaciones de paciente ni DELETE.
+
+## Sesiones, observaciones y evidencias
+
+Estas rutas requieren sesión de acceso y verifican paciente, sesión de seguimiento
+y registros hijos dentro del mismo propietario.
+
+| Métodos | Ruta | Resultado |
+| --- | --- | --- |
+| GET, POST | `P/sesiones` | Lista paginada por fecha/ID descendentes; crear con 201. |
+| GET, PATCH | `P/sesiones/{sesion_id}` | Consultar/editar fecha, asistencia y nota general. |
+| GET, POST | `P/sesiones/{sesion_id}/observaciones` | Lista paginada por ID ascendente; crear con 201. |
+| GET, PATCH | `P/sesiones/{sesion_id}/observaciones/{observacion_id}` | Consultar/editar contenido y objetivo opcional. |
+| GET | `P/objetivos/{objetivo_id}/observaciones` | Evidencias paginadas por fecha de sesión e ID de observación descendentes. |
+
+Una sesión exige `fecha` y `presente` booleano explícito; admite ausencias y cero
+observaciones. `nota_general` es opcional. No se crea contenido automáticamente.
+
+Las observaciones contienen `contexto`, `conducta_observable`, `intervencion`,
+`resultado` y `nota_libre`: al menos uno debe tener texto después de normalizar
+vacíos a null. `objetivo_id` es opcional y debe ser un entero positivo del mismo
+paciente que la sesión; null lo desvincula. Se verifica al crear y editar, incluso
+entre pacientes del mismo profesional. PATCH valida el resultado completo antes
+de modificar; no acepta reasignar sesión, paciente o identidad en el cuerpo.
+
+Las evidencias incluyen los campos de observación más `fecha_sesion`, calculada
+desde la sesión actual. Solo se consultan observaciones vinculadas al objetivo
+autorizado y a sesiones de ese paciente. No se duplican fuentes ni se guarda una
+tabla de evidencias. Sesión/observación se editan mediante PATCH; no hay PUT ni
+DELETE para esos recursos nuevos. Desactivar al paciente conserva todo el historial.
 
 ## Salud y conexión
 
@@ -111,7 +194,7 @@ Para comprobar E1 completa, configurar **ambas** variables y ejecutar la suite s
 
 ### Suite completa con PostgreSQL temporal exclusivo
 
-Para comprobar E1 y autenticación sin elegir una base de datos ni tocar la de trabajo:
+Para comprobar salud, autenticación, perfil y seguimiento sin elegir una base de datos ni tocar la de trabajo:
 
 ```powershell
 $env:POSTGRES_BIN = 'C:/Program Files/PostgreSQL/17/bin'
@@ -121,6 +204,17 @@ $env:POSTGRES_BIN = 'C:/Program Files/PostgreSQL/17/bin'
 El runner crea un cluster temporal con un puerto libre, configura `TEST_DATABASE_URL` y ejecuta toda la suite. Lo detiene al finalizar y conserva los temporales para diagnóstico. Los argumentos opcionales se pasan a pytest (por ejemplo, `backend/tests/test_auth_migration.py`). Se requiere permiso local para iniciar los binarios de PostgreSQL.
 
 Las pruebas de autenticación crean y eliminan únicamente schemas aleatorios propios dentro de la base exclusiva `_test`; no inicializan `public`. Cubren la instalación nueva de diez tablas, migración desde el SQL previo con datos existentes, restricciones, hash Argon2, cookies, registro/login/perfil/logout, vencimiento/revocación/inactividad y aislamiento de dos profesionales en todos los recursos actuales. La prueba de recuperación HTTP sigue creando su propio cluster independiente.
+
+Los módulos `test_profile_*` agregan validaciones, contratos OpenAPI, paginación,
+persistencia de pacientes/admisión/períodos/contactos, conservación de historial,
+edición parcial y reemplazo completo, restricciones PostgreSQL, rollback,
+concurrencia de admisión y aislamiento entre propietarios y padres. Se ejecutan
+con el mismo runner; para seleccionarlos, pasar sus rutas como argumentos.
+
+`test_objectives.py` y `test_tracking_*` verifican estados/cierres atómicos,
+sesiones con asistencia explícita, observaciones con contenido mínimo, vínculos
+del mismo paciente, evidencia ordenada, restricciones SQL y conservación del
+historial. Las pruebas globales de autenticación también cubren todas sus rutas.
 
 Referencias de implementación: [sesiones SQLModel con FastAPI](https://fastapi.tiangolo.com/tutorial/sql-databases/), [configuración con Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) y [recuperación del pool SQLAlchemy](https://docs.sqlalchemy.org/en/21/core/pooling.html).
 

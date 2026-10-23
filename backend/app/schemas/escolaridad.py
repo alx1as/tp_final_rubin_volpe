@@ -4,6 +4,8 @@ from datetime import date
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from app.schemas.comun import EdicionParcial, FechaDominio, FechaOpcional, TextoOpcional, TextoRequerido
+
 
 class EscolaridadGuardar(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -13,8 +15,8 @@ class EscolaridadGuardar(BaseModel):
     grado_anio_sala: str
     modalidad: str
     jornada: str | None = None
-    fecha_inicio: date
-    fecha_fin: date | None = None
+    fecha_inicio: FechaDominio
+    fecha_fin: FechaOpcional = None
     apoyos: str | None = None
     observaciones: str | None = None
     referente_nombre: str | None = None
@@ -51,6 +53,23 @@ class EscolaridadGuardar(BaseModel):
         if self.fecha_fin is not None and self.fecha_fin < self.fecha_inicio:
             raise ValueError("La fecha de finalización no puede ser anterior al inicio")
         return self
+
+
+class EscolaridadEditar(EdicionParcial):
+    campos_no_nulos = frozenset({"institucion", "nivel", "grado_anio_sala", "modalidad", "fecha_inicio"})
+
+    institucion: TextoRequerido | None = None
+    nivel: TextoRequerido | None = None
+    grado_anio_sala: TextoRequerido | None = None
+    modalidad: TextoRequerido | None = None
+    jornada: TextoOpcional = None
+    fecha_inicio: FechaDominio | None = None
+    fecha_fin: FechaOpcional = None
+    apoyos: TextoOpcional = None
+    observaciones: TextoOpcional = None
+    referente_nombre: TextoOpcional = None
+    referente_rol: TextoOpcional = None
+    referente_contacto: TextoOpcional = None
 
 
 class EscolaridadRespuesta(EscolaridadGuardar):

@@ -15,8 +15,17 @@ CHILDREN = {
     'objetivos': {'descripcion': 'Objetivo ficticio', 'fecha_inicio': '2026-01-01'},
 }
 OPERATIONS = [('GET', '/api/pacientes'), ('POST', '/api/pacientes'), ('GET', '/api/pacientes/1/admision'), ('PUT', '/api/pacientes/1/admision')]
+OPERATIONS.extend([('GET', '/api/pacientes/1'), ('PATCH', '/api/pacientes/1')])
 for child in CHILDREN:
     OPERATIONS.extend([('GET', f'/api/pacientes/1/{child}'), ('POST', f'/api/pacientes/1/{child}'), ('PUT', f'/api/pacientes/1/{child}/1')])
+    OPERATIONS.extend([('GET', f'/api/pacientes/1/{child}/1'), ('PATCH', f'/api/pacientes/1/{child}/1')])
+OPERATIONS.extend([
+    ('GET','/api/pacientes/1/sesiones'), ('POST','/api/pacientes/1/sesiones'),
+    ('GET','/api/pacientes/1/sesiones/1'), ('PATCH','/api/pacientes/1/sesiones/1'),
+    ('GET','/api/pacientes/1/sesiones/1/observaciones'), ('POST','/api/pacientes/1/sesiones/1/observaciones'),
+    ('GET','/api/pacientes/1/sesiones/1/observaciones/1'), ('PATCH','/api/pacientes/1/sesiones/1/observaciones/1'),
+    ('GET','/api/pacientes/1/objetivos/1/observaciones'),
+])
 
 
 def authenticate(client, email):
@@ -56,24 +65,27 @@ def test_domain_isolation_between_professionals_and_nested_patients(auth_app):
         own_id = own.json()['id']
         sibling_id = first.post('/api/pacientes', json=PATIENT | {'nombre': 'Otro'}).json()['id']
         other_id = second.post('/api/pacientes', json=PATIENT).json()['id']
-        assert {item['id'] for item in first.get('/api/pacientes').json()} == {own_id, sibling_id}
-        assert [item['id'] for item in second.get('/api/pacientes').json()] == [other_id]
+        assert {item['id'] for item in first.get('/api/pacientes').json()['items']} == {own_id, sibling_id}
+        assert [item['id'] for item in second.get('/api/pacientes').json()['items']] == [other_id]
         assert first.post('/api/pacientes', json=PATIENT | {'profesional_id': second_id}).status_code == 422
         path = f'/api/pacientes/{own_id}'
-        assert first.put(path + '/admision', json=ADMISSION).status_code == 200
+        assert first.put(path + '/admision', json=ADMISSION).status_code == 201
         assert second.get(path + '/admision').status_code == 404
         assert second.put(path + '/admision', json=ADMISSION).status_code == 404
         for resource, body in CHILDREN.items():
             created = first.post(path + '/' + resource, json=body)
             assert created.status_code == 201
             child_id = created.json()['id']
-            assert first.get(path + '/' + resource).json()[0]['id'] == child_id
+            listing = first.get(path + '/' + resource).json()
+            items = listing['items']
+            assert items[0]['id'] == child_id
             assert second.get(path + '/' + resource).status_code == 404
             assert second.post(path + '/' + resource, json=body).status_code == 404
             assert second.put(path + f'/{resource}/{child_id}', json=body).status_code == 404
             assert second.put(f'/api/pacientes/{other_id}/{resource}/{child_id}', json=body).status_code == 404
             assert first.put(f'/api/pacientes/{sibling_id}/{resource}/{child_id}', json=body).status_code == 404
             assert first.put(path + f'/{resource}/{child_id}', json=body).status_code == 200
-            assert second.get(f'/api/pacientes/{other_id}/{resource}').json() == []
+            other_listing = second.get(f'/api/pacientes/{other_id}/{resource}').json()
+            assert other_listing['items'] == []
             assert first.get(f'/api/pacientes/2147483647/{resource}').status_code == 404
         assert first.get('/api/pacientes/2147483647/admision').status_code == 404

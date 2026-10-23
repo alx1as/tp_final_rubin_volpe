@@ -9,6 +9,7 @@ from sqlalchemy.engine import make_url
 
 from app.core.config import Settings
 from app.main import create_app
+from fastapi.testclient import TestClient
 
 
 @pytest.fixture
@@ -78,3 +79,12 @@ def isolated_database(postgres_settings):
 def auth_app(isolated_database):
     isolated_database.state.execute_test_script(Path(__file__).resolve().parents[1] / "init.sql")
     return isolated_database
+
+
+@pytest.fixture
+def profile_client(auth_app):
+    with TestClient(auth_app) as client:
+        data = {"nombre": "Nombre", "apellido": "Prueba", "email": "perfil@example.com", "password": "Password de prueba 123"}
+        assert client.post("/api/auth/registro", json=data).status_code == 201
+        assert client.post("/api/auth/login", json={key: data[key] for key in ("email", "password")}).status_code == 200
+        yield client

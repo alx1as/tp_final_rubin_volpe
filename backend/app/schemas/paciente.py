@@ -1,5 +1,6 @@
-from datetime import date
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+
+from app.schemas.comun import EdicionParcial, FechaDominio, TextoRequerido
 
 
 class PacienteCrear(BaseModel):
@@ -7,8 +8,8 @@ class PacienteCrear(BaseModel):
 
     nombre: str
     apellido: str
-    fecha_nacimiento: date
-    fecha_inicio_seguimiento: date
+    fecha_nacimiento: FechaDominio
+    fecha_inicio_seguimiento: FechaDominio
 
     @field_validator("nombre", "apellido")
     @classmethod
@@ -25,7 +26,21 @@ class PacienteCrear(BaseModel):
         return self
 
 
-class PacienteRespuesta(PacienteCrear):
+class PacienteDatos(PacienteCrear):
+    activo: bool = True
+
+
+class PacienteEditar(EdicionParcial):
+    campos_no_nulos = frozenset({"nombre", "apellido", "fecha_nacimiento", "fecha_inicio_seguimiento", "activo"})
+
+    nombre: TextoRequerido | None = None
+    apellido: TextoRequerido | None = None
+    fecha_nacimiento: FechaDominio | None = None
+    fecha_inicio_seguimiento: FechaDominio | None = None
+    activo: bool | None = None
+
+
+class PacienteRespuesta(PacienteDatos):
     model_config = ConfigDict(from_attributes=True)
 
     id: int

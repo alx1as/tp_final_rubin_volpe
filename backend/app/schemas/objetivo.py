@@ -4,6 +4,8 @@ from datetime import date
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
+from app.schemas.comun import EdicionParcial, FechaDominio, FechaOpcional, TextoOpcional, TextoRequerido
+
 EstadoObjetivo = Literal["activo", "cumplido", "cerrado"]
 
 
@@ -11,9 +13,9 @@ class ObjetivoGuardar(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     descripcion: str
-    fecha_inicio: date
+    fecha_inicio: FechaDominio
     estado: EstadoObjetivo = "activo"
-    fecha_cierre: date | None = None
+    fecha_cierre: FechaOpcional = None
     observaciones_generales: str | None = None
 
     @field_validator("descripcion")
@@ -47,6 +49,16 @@ class ObjetivoGuardar(BaseModel):
         if self.fecha_cierre is not None and self.fecha_cierre < self.fecha_inicio:
             raise ValueError("La fecha de cierre no puede ser anterior al inicio")
         return self
+
+
+class ObjetivoEditar(EdicionParcial):
+    campos_no_nulos = frozenset({"descripcion", "fecha_inicio", "estado"})
+
+    descripcion: TextoRequerido | None = None
+    fecha_inicio: FechaDominio | None = None
+    estado: EstadoObjetivo | None = None
+    fecha_cierre: FechaOpcional = None
+    observaciones_generales: TextoOpcional = None
 
 
 class ObjetivoRespuesta(ObjetivoGuardar):

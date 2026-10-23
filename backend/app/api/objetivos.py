@@ -1,57 +1,75 @@
 """Consultar, crear y editar objetivos de un paciente."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 from sqlmodel import select
 
-from app.api.dependencies import ProfesionalActual, SesionDB
-from app.models import Objetivo, Paciente
-from app.schemas.objetivo import ObjetivoGuardar, ObjetivoRespuesta
+from app.api.dependencies import PacienteAutorizado, ParametrosPagina, SesionDB
+from app.models import Objetivo, Observacion, Sesion
+from app.schemas.comun import Pagina
+from app.schemas.objetivo import ObjetivoEditar, ObjetivoGuardar, ObjetivoRespuesta
+from app.schemas.observacion import EvidenciaObjetivo
+from app.services.perfil import buscar_hijo, editar, guardar, paginar
 
 router = APIRouter(prefix="/pacientes/{paciente_id}/objetivos", tags=["Objetivos"])
 
 
-def verificar_paciente(paciente_id: int, session: SesionDB, profesional: ProfesionalActual) -> None:
-    paciente = session.get(Paciente, paciente_id)
-    if paciente is None or paciente.profesional_id != profesional.id:
-        raise HTTPException(status_code=404, detail="Paciente no encontrado")
-
-
-@router.get("", response_model=list[ObjetivoRespuesta])
-def listar_objetivos(paciente_id: int, session: SesionDB, profesional: ProfesionalActual):
-    verificar_paciente(paciente_id, session, profesional)
-    return session.exec(
+@router.get("", response_model=Pagina[ObjetivoRespuesta])
+def listar_objetivos(paciente: PacienteAutorizado, session: SesionDB, pagina: ParametrosPagina):
+    consulta = (
         select(Objetivo)
-        .where(Objetivo.paciente_id == paciente_id)
+        .where(Objetivo.paciente_id == paciente.id)
         .order_by(Objetivo.fecha_inicio.desc(), Objetivo.id.desc())
-    ).all()
+    )
+    return paginar(session, consulta, pagina)
 
 
 @router.post("", response_model=ObjetivoRespuesta, status_code=status.HTTP_201_CREATED)
 def crear_objetivo(
-    paciente_id: int, datos: ObjetivoGuardar, session: SesionDB, profesional: ProfesionalActual
+    datos: ObjetivoGuardar, paciente: PacienteAutorizado, session: SesionDB,
 ):
-    verificar_paciente(paciente_id, session, profesional)
-    registro = Objetivo(paciente_id=paciente_id, **datos.model_dump())
-    session.add(registro)
-    session.commit()
-    session.refresh(registro)
-    return registro
+    registro = Objetivo(paciente_id=paciente.id, **datos.model_dump())
+    return guardar(session, registro)
 
 
-@router.put("/{objetivo_id}", response_model=ObjetivoRespuesta)
+@router.put("/{objetivo_id}", response_model=ObjetivoRespuesta, deprecated=True)
 def editar_objetivo(
-    paciente_id: int, objetivo_id: int, datos: ObjetivoGuardar,
-    session: SesionDB, profesional: ProfesionalActual,
+    objetivo_id: int, datos: ObjetivoGuardar,
+    paciente: PacienteAutorizado, session: SesionDB,
 ):
-    verificar_paciente(paciente_id, session, profesional)
-    registro = session.exec(
-        select(Objetivo).where(Objetivo.id == objetivo_id, Objetivo.paciente_id == paciente_id)
-    ).first()
-    if registro is None:
-        raise HTTPException(status_code=404, detail="Objetivo no encontrado")
+    registro = buscar_hijo(session, Objetivo, paciente.id, objetivo_id)
     for campo, valor in datos.model_dump().items():
         setattr(registro, campo, valor)
-    session.add(registro)
-    session.commit()
-    session.refresh(registro)
-    return registro
+    return guardar(session, registro)
+
+
+@router.get("/{objetivo_id}", response_model=ObjetivoRespuesta)
+def consultar_objetivo(objetivo_id: int, paciente: PacienteAutorizado, session: SesionDB):
+    return buscar_hijo(session, Objetivo, paciente.id, objetivo_id)
+
+
+@router.patch("/{objetivo_id}", response_model=ObjetivoRespuesta)
+def actualizar_objetivo(
+    objetivo_id: int, datos: ObjetivoEditar,
+    paciente: PacienteAutorizado, session: SesionDB,
+):
+    registro = buscar_hijo(session, Objetivo, paciente.id, objetivo_id)
+    return editar(session, registro, datos, ObjetivoGuardar)
+
+
+@router.get("/{objetivo_id}/observaciones", response_model=Pagina[EvidenciaObjetivo])
+def listar_evidencias(
+    objetivo_id: int, paciente: PacienteAutorizado, session: SesionDB, pagina: ParametrosPagina,
+):
+    objetivo = buscar_hijo(session, Objetivo, paciente.id, objetivo_id)
+    consulta = (
+        select(Observacion, Sesion.fecha)
+        .join(Sesion, Observacion.sesion_id == Sesion.id)
+        .where(Observacion.objetivo_id == objetivo.id, Sesion.paciente_id == paciente.id)
+        .order_by(Sesion.fecha.desc(), Observacion.id.desc())
+    )
+    resultado = paginar(session, consulta, pagina)
+    resultado.items = [
+        EvidenciaObjetivo(**observacion.model_dump(), fecha_sesion=fecha)
+        for observacion, fecha in resultado.items
+    ]
+    return resultado
