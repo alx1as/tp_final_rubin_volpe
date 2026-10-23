@@ -1,36 +1,12 @@
-from typing import Annotated
+from fastapi import APIRouter, status
+from sqlmodel import select
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
-
-from app.db.session import get_session
-from app.models import Paciente, Profesional
+from app.api.dependencies import ProfesionalActual, SesionDB
+from app.models import Paciente
 from app.schemas.paciente import PacienteCrear, PacienteRespuesta
 
 
 router = APIRouter(prefix="/pacientes", tags=["Pacientes"])
-
-SesionDB = Annotated[Session, Depends(get_session)]
-
-
-# TEMPORAL: profesional de prueba para desarrollo local.
-# Reemplazar por autenticación real antes de publicar.
-def obtener_profesional_actual(session: SesionDB) -> Profesional:
-    profesional = session.get(Profesional, 1)
-
-    if profesional is None:
-        raise HTTPException(
-            status_code=404,
-            detail="No se encontró el profesional de prueba",
-        )
-
-    return profesional
-
-
-ProfesionalActual = Annotated[
-    Profesional, Depends(obtener_profesional_actual)
-]
-
 
 # Listar pacientes del profesional.
 @router.get("", response_model=list[PacienteRespuesta])

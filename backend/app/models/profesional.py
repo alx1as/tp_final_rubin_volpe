@@ -8,5 +8,5 @@ class Profesional(SQLModel, table=True):
     nombre: str
     apellido: str
     email: str
-    password_hash: str
+    password_hash: str = Field(repr=False)
     activo: bool = True

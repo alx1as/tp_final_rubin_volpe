@@ -2,10 +2,12 @@
 
 from pathlib import Path
 
-from pydantic import SecretStr, ValidationError, field_validator
+from pydantic import Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict, SettingsError
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import ArgumentError
+
+from app.core.origins import normalize_origin
 
 
 class Settings(BaseSettings):
@@ -17,6 +19,15 @@ class Settings(BaseSettings):
     )
 
     database_url: SecretStr
+    session_cookie_secure: bool = False
+    allowed_origins: list[str] = Field(default_factory=lambda: [
+        "http://localhost:5173", "http://127.0.0.1:5173",
+    ])
+
+    @field_validator("allowed_origins")
+    @classmethod
+    def validate_origins(cls, value: list[str]) -> list[str]:
+        return list(dict.fromkeys(normalize_origin(origin) for origin in value))
 
     @field_validator("database_url")
     @classmethod
@@ -42,6 +53,7 @@ def load_settings() -> Settings:
         return Settings()
     except (ValidationError, SettingsError):
         raise RuntimeError(
-            "Configuración inválida: revise DATABASE_URL en el entorno o backend/.env. "
+            "Configuración inválida: revise DATABASE_URL, ALLOWED_ORIGINS y "
+            "SESSION_COOKIE_SECURE en el entorno o backend/.env. "
             "Use backend/.env.example como referencia."
         ) from None

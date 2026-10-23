@@ -28,6 +28,37 @@ La configuración se carga desde `backend/.env`, independientemente del director
 
 Una URL ausente o inválida impide iniciar y muestra un mensaje que identifica `DATABASE_URL`, sin su contenido. La URL se conserva como `SecretStr` y no aparece en la representación de la configuración. Con configuración válida, PostgreSQL puede estar caído y la API igualmente inicia.
 
+`ALLOWED_ORIGINS` es una lista JSON de orígenes completos, sin rutas, barras finales ni comodines. Por defecto permite `http://localhost:5173` y `http://127.0.0.1:5173`. CORS habilita credenciales para esos orígenes explícitos. Las operaciones POST/PUT/PATCH/DELETE rechazan con `403` un `Origin` distinto de los permitidos o del origen de la API; los clientes sin ese encabezado, como CLI y Swagger, pueden operar.
+
+`SESSION_COOKIE_SECURE` es `false` para desarrollo HTTP local; usar `true` en producción con HTTPS. Copiar las opciones del ejemplo a la configuración local cuando corresponda; la aplicación no modifica `.env`.
+
+## Autenticación
+
+Antes de usarla, instalar el esquema nuevo o aplicar la migración manual descrita más abajo. El registro crea cuentas con nombre/apellido recortados, correo recortado y en minúsculas, y contraseña de 8 a 1024 caracteres, sin recortar sus espacios. La contraseña se guarda con Argon2 mediante [pwdlib](https://frankie567.github.io/pwdlib/). Las respuestas solo incluyen `id`, `nombre`, `apellido`, `email` y `activo`.
+
+| Método | Ruta | Resultado |
+| --- | --- | --- |
+| POST | `/api/auth/registro` | JSON `nombre`, `apellido`, `email`, `password`; crea una cuenta (`201`), sin iniciar sesión. Correo duplicado: `409`. |
+| POST | `/api/auth/login` | JSON `email`, `password`; devuelve el profesional público (`200`) y establece cookie. Credenciales inválidas o profesional inactivo: `401` con el mismo mensaje. |
+| GET | `/api/auth/me` | Profesional de la sesión actual (`200`); sesión ausente, vencida, revocada o profesional inactivo: `401`. |
+| POST | `/api/auth/logout` | Revoca solo la sesión actual y elimina cookie (`204`, sin cuerpo). Sesión inválida: `401`. |
+
+Cada login genera un token aleatorio de 256 bits; PostgreSQL conserva solo su SHA-256 en `sesion_autenticacion`. La sesión dura ocho horas, sin renovación automática. La cookie `sesion` usa `HttpOnly`, `SameSite=Lax`, `Path=/`, `Max-Age=28800` y `Secure` según configuración. El token no se devuelve en JSON. Las consultas protegidas verifican sesión y cuenta activa en cada solicitud.
+
+Pacientes, admisión, escolaridad, profesionales tratantes y objetivos requieren una sesión y limitan sus operaciones al profesional autenticado. Los recursos ajenos o inexistentes responden `404`. Se eliminó el profesional de prueba fijo; los contactos tratantes siguen sin otorgar acceso. Salud, registro y login son públicos, igual que `/docs` y OpenAPI. Los errores de validación no incluyen los valores recibidos; los errores de base no exponen consultas ni credenciales.
+
+Para probarlo desde PowerShell, registrar primero una cuenta por `/docs`. Después usar su correo y contraseña elegida:
+
+```powershell
+$credenciales = @{ email = 'profesional@example.com'; password = '<contraseña elegida>' } | ConvertTo-Json
+Invoke-RestMethod http://127.0.0.1:8000/api/auth/login -Method Post -ContentType 'application/json' -Body $credenciales -SessionVariable sesionApi
+Invoke-RestMethod http://127.0.0.1:8000/api/auth/me -WebSession $sesionApi
+Invoke-RestMethod http://127.0.0.1:8000/api/pacientes -WebSession $sesionApi
+Invoke-RestMethod http://127.0.0.1:8000/api/auth/logout -Method Post -WebSession $sesionApi
+```
+
+El frontend actual todavía no incorpora registro/login/logout ni envía `credentials: "include"`. Sus solicitudes de dominio recibirán `401` hasta realizar esa adaptación coordinada. Esta etapa agrega autenticación al backend; la adaptación del cliente se mantiene en trabajo separado. En desarrollo, usar el mismo nombre de host para ambas aplicaciones (por ejemplo, `127.0.0.1` en ambas), conforme a la cookie `SameSite=Lax`. Los arrays, métodos PUT y respuestas de admisión actuales se conservan para una conciliación posterior de contratos.
+
 ## Salud y conexión
 
 ```powershell
@@ -78,11 +109,24 @@ Esa prueba crea su propio cluster temporal en un directorio de pytest, escucha s
 
 Para comprobar E1 completa, configurar **ambas** variables y ejecutar la suite sin pruebas omitidas. Los comandos también funcionan desde `backend` usando `./.venv/Scripts/python.exe -m pytest -q`.
 
+### Suite completa con PostgreSQL temporal exclusivo
+
+Para comprobar E1 y autenticación sin elegir una base de datos ni tocar la de trabajo:
+
+```powershell
+$env:POSTGRES_BIN = 'C:/Program Files/PostgreSQL/17/bin'
+& ./backend/.venv/Scripts/python.exe backend/tests/run_postgres_tests.py
+```
+
+El runner crea un cluster temporal con un puerto libre, configura `TEST_DATABASE_URL` y ejecuta toda la suite. Lo detiene al finalizar y conserva los temporales para diagnóstico. Los argumentos opcionales se pasan a pytest (por ejemplo, `backend/tests/test_auth_migration.py`). Se requiere permiso local para iniciar los binarios de PostgreSQL.
+
+Las pruebas de autenticación crean y eliminan únicamente schemas aleatorios propios dentro de la base exclusiva `_test`; no inicializan `public`. Cubren la instalación nueva de diez tablas, migración desde el SQL previo con datos existentes, restricciones, hash Argon2, cookies, registro/login/perfil/logout, vencimiento/revocación/inactividad y aislamiento de dos profesionales en todos los recursos actuales. La prueba de recuperación HTTP sigue creando su propio cluster independiente.
+
 Referencias de implementación: [sesiones SQLModel con FastAPI](https://fastapi.tiangolo.com/tutorial/sql-databases/), [configuración con Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) y [recuperación del pool SQLAlchemy](https://docs.sqlalchemy.org/en/21/core/pooling.html).
 
 ## Esquema de datos
 
-El esquema de PostgreSQL está definido en [init.sql](init.sql), a partir de la propuesta y del documento de arquitectura de datos de [docs](../docs). Contempla nueve tablas para las cuentas profesionales, los perfiles de pacientes y su seguimiento psicopedagógico.
+El esquema de PostgreSQL está definido en [init.sql](init.sql), a partir de la propuesta y del documento de arquitectura de datos de [docs](../docs). Contempla nueve tablas de dominio para las cuentas profesionales, los perfiles de pacientes y su seguimiento, más la tabla técnica `sesion_autenticacion` para sesiones de acceso revocables.
 
 ## Inicialización
 
@@ -94,12 +138,23 @@ psql -U <usuario> -d <base_de_datos> -v ON_ERROR_STOP=1 -f backend/init.sql
 
 El archivo ejecuta la creación dentro de una transacción (`BEGIN` / `COMMIT`). Está preparado para ejecutarse una sola vez: si las tablas ya existen, la operación falla. Las modificaciones posteriores deben realizarse mediante migraciones.
 
+### Actualizar una instalación previa
+
+Si la base ya tiene las nueve tablas del esquema anterior, aplicar manualmente esta migración una sola vez:
+
+```sh
+psql -U <usuario> -d <base_de_datos> -v ON_ERROR_STOP=1 -f backend/migrations/001_sesion_autenticacion.sql
+```
+
+La migración agrega únicamente la tabla de sesiones y su índice; conserva las tablas y los datos de dominio. Una base nueva usa solamente `init.sql`, que ya incluye ese cambio: no ejecutar también la migración. Ninguno de esos archivos se ejecuta al iniciar la API. Una segunda ejecución falla por tabla existente y revierte la transacción.
+
 ## Diagrama entidad-relación
 
 `PK` indica clave primaria, `FK` clave foránea y `UK` unicidad. Los atributos marcados como `opcional` aceptan `NULL`. El correo tiene un índice único sobre su expresión normalizada, explicado más adelante.
 
 ```mermaid
 erDiagram
+    profesional ||..o{ sesion_autenticacion : inicia
     profesional ||..o{ paciente : gestiona
     paciente ||..o| admision : tiene
     paciente ||..o{ escolaridad : registra
@@ -117,6 +172,15 @@ erDiagram
         text email "unico sobre lower(btrim(email))"
         text password_hash
         boolean activo
+    }
+
+    sesion_autenticacion {
+        integer id PK
+        integer profesional_id FK
+        text token_hash UK "SHA-256 hexadecimal, nunca el token"
+        timestamptz creada_en
+        timestamptz vence_en
+        timestamptz revocada_en "opcional"
     }
 
     paciente {
@@ -218,6 +282,7 @@ Las cardinalidades indican cuántos registros hijos puede tener cada padre. Cada
 
 | Relación padre → hijo | Cardinalidad | Clave foránea | Constraint |
 | --- | --- | --- | --- |
+| `profesional` → `sesion_autenticacion` | 1 → 0..N | `sesion_autenticacion.profesional_id` → `profesional.id` | `fk_sesion_autenticacion_profesional` |
 | `profesional` → `paciente` | 1 → 0..N | `paciente.profesional_id` → `profesional.id` | `fk_paciente_profesional` |
 | `paciente` → `admision` | 1 → 0..1 | `admision.paciente_id` → `paciente.id` | `fk_admision_paciente` |
 | `paciente` → `escolaridad` | 1 → 0..N | `escolaridad.paciente_id` → `paciente.id` | `fk_escolaridad_paciente` |
@@ -238,7 +303,7 @@ No se declara `ON UPDATE`, por lo que se aplica `NO ACTION`: un cambio de ID deb
 
 ### Claves primarias y generación de identificadores
 
-Las nueve tablas tienen `id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY`. La clave primaria exige un valor único y no nulo. PostgreSQL genera el ID cuando se omite en un `INSERT`; `BY DEFAULT` también permite proporcionar un ID explícito. La API debe dejar que la base genere los identificadores nuevos.
+Las diez tablas tienen `id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY`. La clave primaria exige un valor único y no nulo. PostgreSQL genera el ID cuando se omite en un `INSERT`; `BY DEFAULT` también permite proporcionar un ID explícito. La API debe dejar que la base genere los identificadores nuevos.
 
 ### Campos obligatorios y opcionales
 
@@ -247,6 +312,7 @@ Todas las columnas son `NOT NULL`, excepto las enumeradas en esta tabla. Un valo
 | Tabla | Columnas que aceptan `NULL` |
 | --- | --- |
 | `profesional` | Ninguna |
+| `sesion_autenticacion` | `revocada_en` |
 | `paciente` | Ninguna |
 | `admision` | `antecedentes_personales`, `antecedentes_evolutivos`, `antecedentes_salud`, `grupo_familiar`, `tratamientos_actuales`, `observaciones` |
 | `escolaridad` | `jornada`, `fecha_fin`, `apoyos`, `observaciones`, `referente_nombre`, `referente_rol`, `referente_contacto` |
@@ -264,6 +330,7 @@ En `objetivo`, la posibilidad de dejar `fecha_cierre` en `NULL` depende del esta
 | --- | --- |
 | `admision.paciente_id UNIQUE` | Cada paciente puede tener una sola admisión. Combinado con `NOT NULL` y la FK, impide duplicados y admisiones sin paciente. |
 | `uq_profesional_email` | Índice único sobre `lower(btrim(email))`. Rechaza correos equivalentes al ignorar mayúsculas y espacios en los extremos. Por ejemplo, `Profesional@example.com` y ` profesional@example.com ` se consideran iguales. |
+| `sesion_autenticacion.token_hash` | Hash único de 64 caracteres hexadecimales en minúsculas. Solo se guarda SHA-256; el token original no se persiste. |
 
 El índice del correo compara la expresión normalizada; no modifica el texto almacenado ni valida el formato de una dirección de correo electrónico.
 
@@ -285,6 +352,9 @@ Estos campos tienen `CHECK (btrim(campo) <> '')`, además de `NOT NULL`. Rechaza
 
 | Constraint | Regla aplicada por PostgreSQL |
 | --- | --- |
+| `ck_sesion_autenticacion_hash` | Exactamente 64 caracteres hexadecimales en minúsculas. |
+| `ck_sesion_autenticacion_vencimiento` | `vence_en > creada_en`. Los timestamps tienen zona horaria. |
+| `ck_sesion_autenticacion_revocacion` | `revocada_en IS NULL OR revocada_en >= creada_en`. |
 | `ck_paciente_fechas` | `fecha_inicio_seguimiento >= fecha_nacimiento`. |
 | `ck_escolaridad_fechas` | `fecha_fin IS NULL OR fecha_fin >= fecha_inicio`. Una fecha final nula indica un período vigente. |
 | `ck_profesional_tratante_fechas` | `fecha_fin IS NULL OR fecha_fin >= fecha_inicio`. Una fecha final nula indica una intervención vigente. |
@@ -302,6 +372,7 @@ Los valores de los estados son decisiones iniciales de `init.sql`, ya que los PD
 | Columna | Valor por defecto |
 | --- | --- |
 | `profesional.activo` | `TRUE` |
+| `sesion_autenticacion.creada_en` | `CURRENT_TIMESTAMP` |
 | `paciente.activo` | `TRUE` |
 | `objetivo.estado` | `'activo'` |
 | `informe.fecha` | `CURRENT_DATE` |
@@ -317,6 +388,8 @@ Además de los índices que PostgreSQL crea para las claves primarias y `admisio
 | Índice | Columnas / expresión | Propósito |
 | --- | --- | --- |
 | `uq_profesional_email` | `lower(btrim(email))` | Garantizar la unicidad del correo normalizado. |
+| `uq_sesion_autenticacion_token_hash` | `token_hash` | Buscar una sesión por hash y garantizar su unicidad. |
+| `idx_sesion_autenticacion_profesional` | `profesional_id` | Consultar sesiones de un profesional y cubrir su FK. |
 | `idx_paciente_profesional_nombre` | `profesional_id, apellido, nombre` | Listar los pacientes de un profesional por apellido y nombre. |
 | `idx_escolaridad_paciente_fecha` | `paciente_id, fecha_inicio DESC` | Consultar períodos escolares por paciente y fecha. |
 | `idx_profesional_tratante_paciente` | `paciente_id` | Recuperar contactos externos del paciente. |
@@ -326,19 +399,19 @@ Además de los índices que PostgreSQL crea para las claves primarias y `admisio
 | `idx_observacion_objetivo` | `objetivo_id` | Recuperar las observaciones vinculadas a un objetivo. |
 | `idx_informe_paciente_fecha` | `paciente_id, fecha DESC, id DESC` | Consultar informes del paciente en orden temporal. |
 
-Los índices de consulta no agregan restricciones de unicidad, salvo `uq_profesional_email`.
+Los índices de consulta no agregan restricciones de unicidad, salvo los de correo normalizado y hash del token.
 
-## Validaciones a implementar en el backend
+## Validaciones de la API y pendientes
 
 Las siguientes reglas requieren validación en la API y sus servicios; `init.sql` no las garantiza por sí solo:
 
-- Comprobar que el paciente pertenece al profesional autenticado antes de consultar o modificar su información. La pertenencia de los registros hijos se obtiene a través de `paciente`; no repiten `profesional_id`.
+- Las rutas existentes comprueban que el paciente pertenece al profesional autenticado antes de consultar o modificar su información. La pertenencia de los registros hijos se obtiene a través de `paciente`; no repiten `profesional_id`. Aplicar la misma regla al incorporar nuevos recursos.
 - Comprobar que el objetivo vinculado a una observación pertenece al mismo paciente que su sesión. Las dos FK verifican que los registros existan, pero no que sus pacientes coincidan. La validación también debe realizarse al cambiar los vínculos o reasignar objetivos y sesiones a otro paciente.
-- Calcular el hash de la contraseña antes de guardar `password_hash`. Su constraint solo exige texto no vacío; no comprueba el algoritmo ni que el contenido sea un hash.
+- El registro calcula el hash Argon2 antes de guardar `password_hash`. Su constraint SQL solo exige texto no vacío; no comprueba el algoritmo ni que el contenido sea un hash.
 - Validar formatos de entrada, como el correo electrónico, y convertir a `NULL` los campos opcionales vacíos del frontend, especialmente las fechas.
 - Aplicar la revisión profesional de transcripciones e informes antes de confirmar el contenido correspondiente.
 
-La correspondencia de campos del frontend es `fechaNacimiento` → `fecha_nacimiento` y `fechaInicio` → `fecha_inicio_seguimiento`. Los demás campos actuales de admisión y escolaridad ya usan los nombres del esquema.
+El frontend y la API actuales ya usan `fecha_nacimiento` y `fecha_inicio_seguimiento`; la conversión anterior desde `fechaNacimiento`/`fechaInicio` dejó de ser necesaria. Los campos actuales de admisión y escolaridad también usan los nombres del esquema.
 
 ## Criterios de persistencia
 

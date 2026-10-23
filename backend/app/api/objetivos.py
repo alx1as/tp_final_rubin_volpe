@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
-from app.api.pacientes import ProfesionalActual, SesionDB
+from app.api.dependencies import ProfesionalActual, SesionDB
 from app.models import Objetivo, Paciente
 from app.schemas.objetivo import ObjetivoGuardar, ObjetivoRespuesta
 

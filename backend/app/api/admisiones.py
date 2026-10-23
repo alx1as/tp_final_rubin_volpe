@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select
 
-from app.api.pacientes import ProfesionalActual, SesionDB
+from app.api.dependencies import ProfesionalActual, SesionDB
 from app.models import Admision, Paciente
 from app.schemas.admision import AdmisionGuardar, AdmisionRespuesta
 
