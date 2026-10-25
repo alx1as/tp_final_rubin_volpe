@@ -129,3 +129,16 @@ svg {
     font-size: 0.95rem;
   }
 }
+
+/* Sesión profesional visible solo después de autenticar. */
+.cabecera-sesion {
+  display: flex; justify-content: flex-end; align-items: center;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+  color: var(--color-texto-secundario); font-size: 13px;
+}
+.cabecera-sesion button {
+  background: var(--color-superficie); border: 1px solid var(--color-borde);
+  border-radius: var(--radio-chico); padding: 7px 12px;
+  color: var(--color-texto); font-weight: 600;
+}
+.cabecera-sesion button:disabled { opacity: .6; }

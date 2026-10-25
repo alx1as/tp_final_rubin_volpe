@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import EvidenciasObjetivo from "./EvidenciasObjetivo";
 
 export type EstadoObjetivo = "activo" | "cumplido" | "cerrado";
 
@@ -18,6 +19,8 @@ type Props = {
   onGuardar: (registro: ObjetivoGuardar, id?: number) => Promise<void>;
   cargando: boolean;
   error: string;
+  pacienteId: number;
+  revisionEvidencias: number;
 };
 
 const mostrarFecha = (fecha: string) =>
@@ -29,7 +32,7 @@ const etiquetasEstado: Record<EstadoObjetivo, string> = {
   cerrado: "Cerrado sin cumplimiento",
 };
 
-export default function ObjetivosPaciente({ registros, onGuardar, cargando, error }: Props) {
+export default function ObjetivosPaciente({ registros, onGuardar, cargando, error, pacienteId, revisionEvidencias }: Props) {
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
   const [estadoFormulario, setEstadoFormulario] = useState<EstadoObjetivo>("activo");
   const [errorFormulario, setErrorFormulario] = useState("");
@@ -126,6 +129,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
             {objetivo.observaciones_generales && (
               <p>Observaciones: {objetivo.observaciones_generales}</p>
             )}
+            <EvidenciasObjetivo pacienteId={pacienteId} objetivoId={objetivo.id} revision={revisionEvidencias} />
           </div>
 
           <button type="button" onClick={() => abrirFormulario(objetivo.id)} disabled={cargando || guardando}>
