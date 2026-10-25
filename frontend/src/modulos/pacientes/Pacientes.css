@@ -1,411 +1,215 @@
-
-/* Estructura principal */
-.estructura-app {
-  display: flex;
-  min-height: 100vh;
+/* Pacientes — diseño de consulta prioritaria y registro, sin modificar los flujos. */
+.pagina-pacientes{width:100%;max-width:1200px;margin:0 auto}
+.pacientes-presentacion{position:relative;display:flex;align-items:stretch;justify-content:space-between;gap:30px;min-height:260px;margin:12px 0 34px;padding:40px 46px;background:#eeedf5;border:1px solid #e5e2ef;border-radius:22px;overflow:hidden}
+.pacientes-presentacion::after{content:"";position:absolute;width:340px;height:340px;border:1px solid rgba(101,87,152,.11);border-radius:50%;right:-100px;bottom:-255px;pointer-events:none}
+.pacientes-presentacion-texto{position:relative;z-index:1;max-width:530px}
+.pacientes-subtitulo,.vista-sobretitulo,.seccion-eyebrow,.ficha-sobretitulo{color:#665c9c;font-size:10px;font-weight:800;letter-spacing:.14em;line-height:1.4}
+.pacientes-presentacion h1{font-size:clamp(32px,3.3vw,46px);margin:9px 0 12px;letter-spacing:-.065em}
+.punto-titulo{color:#aa8a74}
+.pacientes-presentacion-texto>p:not(.pacientes-subtitulo){color:#5e6578;font-size:14px;max-width:430px;line-height:1.7;margin-bottom:24px}
+.pacientes-boton{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:9px 14px;border:1px solid transparent;border-radius:10px;background:#5b5197;color:#fff;font-size:12px;font-weight:700;white-space:nowrap;transition:background .16s,transform .16s,box-shadow .16s}
+.pacientes-boton:hover:not(:disabled){background:#484078;box-shadow:0 5px 13px rgba(91,81,151,.15)}
+.pacientes-boton-grande{min-height:45px;padding:10px 17px;font-size:13px}
+.presentacion-indicadores{position:relative;z-index:1;display:flex;align-items:flex-end;gap:12px;align-self:center}
+.presentacion-indicador{min-width:133px;min-height:133px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:18px;background:rgba(255,255,255,.76);border:1px solid rgba(255,255,255,.95);border-radius:16px;box-shadow:0 5px 18px rgba(79,71,111,.025)}
+.presentacion-indicador-icono{color:#61568d;margin-bottom:8px}
+.presentacion-indicador strong{font:800 28px/1.1 var(--fuente-titulos);letter-spacing:-.05em}
+.presentacion-indicador small{font-size:11px;color:#6c7180;margin-top:5px}
+.pacientes-panel{background:#fff;border:1px solid var(--color-borde);border-radius:16px;padding:24px 27px;margin-bottom:16px;box-shadow:var(--sombra-suave);min-width:0}
+.pacientes-panel h2{font-size:16px;letter-spacing:-.04em}
+.pacientes-listado-panel{padding:27px 30px 12px}
+.pacientes-listado-cabecera{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}
+.pacientes-listado-cabecera h2{font-size:20px;margin-top:5px}
+.pacientes-listado-cabecera>span{color:#7c8791;font-size:12px}
+.busqueda-contenedor{position:relative;display:flex;align-items:center;gap:10px;min-height:48px;padding:0 15px;margin-bottom:12px;border-radius:11px;border:1px solid #e6e8ea;background:#fafafb;color:#8b94a0;transition:border-color .17s,box-shadow .17s}
+.busqueda-contenedor:focus-within{border-color:#9990c7;box-shadow:0 0 0 3px #ece9f8}
+.pacientes-busqueda{width:100%;height:45px;background:transparent;border:0;outline:0;color:var(--color-texto);font-size:13px}
+.pacientes-busqueda::placeholder{color:#909aa4}
+.pacientes-lista{display:flex;flex-direction:column}
+.pacientes-fila{width:100%;display:flex;align-items:center;gap:17px;min-height:82px;padding:14px 8px;background:transparent;border:0;border-bottom:1px solid #edf0f1;text-align:left;transition:background .17s,padding .17s}
+.pacientes-fila:last-child{border-bottom:0}
+.pacientes-fila:hover,.pacientes-fila:focus-visible{background:#faf9fe;padding-left:14px;padding-right:14px;border-radius:11px}
+.pacientes-avatar{height:45px;width:45px;flex:none;display:grid;place-items:center;border-radius:14px;background:#eceaf5;color:#5f568c;font-family:var(--fuente-titulos);font-size:13px;font-weight:800;letter-spacing:.02em}
+.pacientes-fila:nth-child(3n+2) .pacientes-avatar{background:#e7f2ef;color:#37736a}
+.pacientes-fila:nth-child(3n+3) .pacientes-avatar{background:#faeee8;color:#ad735b}
+.pacientes-datos{display:flex;flex:1;flex-direction:column;min-width:0;gap:4px}
+.pacientes-datos strong{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.pacientes-datos small{color:#7a8690;font-size:12px}
+.pacientes-estado,.ficha-estado{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:6px 11px;border-radius:99px;font-size:11px;font-weight:700;white-space:nowrap;background:#e9f4ef;color:#266f5e}
+.pacientes-estado.inactivo,.ficha-estado.inactivo{color:#76808a;background:#edf0f2}
+.fila-flecha{color:#7d7da0;margin:0 8px}
+.pacientes-vacio{text-align:center;padding:30px 10px;color:#7a8690;font-size:13px}
+.pacientes-nota{display:flex;gap:8px;align-items:center;font-size:12px;color:#818b92;margin:21px 6px}
+.pacientes-formulario{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:20px}
+.pacientes-formulario label,.admision-formulario label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:700;color:#45515d}
+.pacientes-formulario input,.admision-formulario input,.admision-formulario textarea,.admision-formulario select{width:100%;min-width:0;min-height:43px;padding:10px 12px;border:1px solid #dfe5e9;border-radius:10px;background:#fff;color:var(--color-texto);font-size:13px;outline:0;transition:border-color .16s,box-shadow .16s}
+.admision-formulario textarea{resize:vertical;min-height:86px;line-height:1.65}
+.pacientes-formulario input:focus,.admision-formulario input:focus,.admision-formulario textarea:focus,.admision-formulario select:focus{border-color:#9c91d0;box-shadow:0 0 0 3px #f0edf9}
+.pacientes-acciones{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.pacientes-acciones button:not(.pacientes-boton){min-height:40px;background:#fff;border:1px solid #e3e7e9;border-radius:10px;padding:8px 13px;color:#64707b;font-size:12px;font-weight:700}
+.pacientes-acciones button:not(.pacientes-boton):hover{background:#f7f8f9}
+/* Ficha */
+.ficha-volver{display:inline-flex;align-items:center;gap:9px;margin:0 0 22px;padding:7px 0;border:0;background:transparent;color:#635797;font-size:12px;font-weight:700}
+.ficha-volver:hover,.enlace-accion:hover,.tarjeta-pie-accion:hover{color:#40386d}
+.ficha-hero{display:flex;justify-content:space-between;align-items:center;gap:28px;margin-bottom:25px;padding:32px 36px;background:#fff;border:1px solid var(--color-borde);border-radius:20px;box-shadow:var(--sombra-suave)}
+.ficha-hero-identidad{display:flex;align-items:center;gap:24px;min-width:0}
+.ficha-monograma{width:76px;height:76px;flex:none;display:grid;place-items:center;background:#ece9f8;color:#5d5295;border:1px solid #e3dff3;border-radius:21px;font:800 24px/1 var(--fuente-titulos)}
+.ficha-hero h1{font-size:clamp(24px,2.5vw,33px);margin:7px 0 7px;letter-spacing:-.06em;overflow-wrap:anywhere}
+.ficha-hero-textos>p:last-child{color:#73808b;font-size:12px}
+.ficha-hero-detalles{display:flex;flex-direction:column;align-items:flex-end;gap:14px;flex-shrink:0}
+.punto-estado{width:7px;height:7px;border-radius:50%;background:currentColor}
+.ficha-fecha-inicio{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:#79848d;white-space:nowrap}
+.navegador-ficha{position:sticky;top:8px;z-index:10;display:flex;gap:5px;padding:6px;margin-bottom:30px;background:#fff;border:1px solid #e6e9ed;border-radius:13px;width:max-content;max-width:100%;box-shadow:0 4px 15px rgba(37,44,65,.035)}
+.ficha-tab{display:flex;align-items:center;justify-content:center;gap:10px;padding:11px 19px;min-height:44px;border:0;border-radius:9px;background:transparent;color:#6c7582;font-size:12px;font-weight:700;white-space:nowrap;transition:background .16s,color .16s}
+.ficha-tab:hover{background:#f6f4fb;color:#514988}
+.ficha-tab.seleccionada{background:#5b5197;color:#fff;box-shadow:0 3px 11px rgba(85,74,151,.12)}
+.vista-pestana[hidden]{display:none!important}
+.vista-pestana{animation:aparece .16s ease-out}
+@keyframes aparece{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.vista-encabezado{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:0 0 23px}
+.vista-encabezado h2{margin:7px 0 7px;font-size:clamp(23px,2.3vw,28px);letter-spacing:-.05em}
+.vista-encabezado p:last-child{font-size:13px;color:#7a8590}
+.enlace-accion{display:inline-flex;align-items:center;gap:8px;color:#5a5192;border:0;background:none;font-size:12px;font-weight:800;padding:10px 0;white-space:nowrap}
+.resumen-indicadores{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:17px}
+.indicador{display:flex;align-items:center;gap:17px;padding:21px 23px;border:1px solid var(--color-borde);border-radius:15px;background:#fff;box-shadow:var(--sombra-suave);min-width:0}
+.indicador-icono{width:46px;height:46px;flex:none;display:grid;place-items:center;border-radius:13px}
+.tono-violeta{color:#665a9d;background:#f0edfa}.tono-verde{color:#34776a;background:#e8f5f0}.tono-ambar{color:#b57a4c;background:#fff0e5}
+.indicador div{display:flex;flex-direction:column;min-width:0}
+.indicador strong{font:800 28px/1.1 var(--fuente-titulos);letter-spacing:-.05em}
+.indicador span:last-child{font-size:11px;color:#78838b;margin-top:5px;line-height:1.4}
+.resumen-grilla{display:grid;grid-template-columns:1.06fr 1fr;gap:17px;margin-bottom:17px}
+.tarjeta-resumen{display:flex;flex-direction:column;padding:27px 28px 0;border:1px solid var(--color-borde);background:#fff;border-radius:16px;box-shadow:var(--sombra-suave);min-width:0}
+.tarjeta-cabecera{display:flex;align-items:center;gap:13px;margin-bottom:23px}
+.tarjeta-icono{height:39px;width:39px;display:grid;place-items:center;flex:none;border-radius:11px;background:#f0eef9;color:#625895}
+.tarjeta-etiqueta{font-size:10px;font-weight:800;color:#8c85b2;letter-spacing:.11em;margin-bottom:3px}
+.tarjeta-cabecera h3{font-size:16px;letter-spacing:-.04em}
+.lista-resumen-objetivos{display:grid;gap:12px;padding:0 0 21px}
+.objetivo-preview{display:flex;align-items:flex-start;gap:12px;font-size:13px;color:#46545d;line-height:1.6;overflow-wrap:anywhere}
+.punto-objetivo{height:7px;width:7px;flex:none;border-radius:50%;background:#68a59a;margin-top:7px}
+.texto-atenuado{color:#7b8790;font-size:13px;line-height:1.7;margin-bottom:24px}
+.ultima-sesion-detalle{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:26px}
+.ultima-sesion-fecha{font-size:20px;letter-spacing:-.04em;font-family:var(--fuente-titulos)}
+.estado-asistencia{padding:5px 9px;border-radius:99px;background:#e8f4ee;color:#357263;font-size:10px;font-weight:800}
+.estado-asistencia.ausente{color:#a5713e;background:#fcf1df}
+.ultima-sesion-detalle p{flex-basis:100%;font-size:13px;line-height:1.65;color:#65717b;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tarjeta-pie-accion{width:100%;min-height:51px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border:0;border-top:1px solid #ecedf0;background:transparent;text-align:left;color:#655a9b;font-weight:800;font-size:12px;margin-top:auto}
+.tarjeta-contexto{margin-bottom:16px}
+.contexto-columnas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px;margin:0 0 24px}
+.contexto-columnas>div{border-right:1px solid #edf0f2;padding-right:18px;min-width:0}
+.contexto-columnas>div:last-child{border-right:0}
+.contexto-icono{display:inline-flex;color:#8680ae;margin-bottom:11px}
+.contexto-columnas small{display:block;font-size:11px;color:#858f98;margin-bottom:5px}
+.contexto-columnas p{font-size:13px;font-weight:700;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.seguimiento-columnas{display:grid;grid-template-columns:minmax(330px,.83fr) minmax(0,1.17fr);align-items:start;gap:18px}
+.seguimiento-columnas .pacientes-panel{padding:23px;min-width:0}
+.seguimiento-columnas .admision-cabecera{align-items:flex-start}
+.seguimiento-columnas .admision-cabecera h2{padding-top:7px}
+.seguimiento-columnas .pacientes-boton{white-space:normal;text-align:center}
+.informacion-grid{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);gap:17px;align-items:start}
+.informacion-grid>div{min-width:0}
+.informacion-grid .pacientes-panel{margin-bottom:17px}
+.ficha-datos-panel{margin-bottom:17px;padding:27px 29px}
+.titulo-icono{display:flex;align-items:center;gap:10px;color:#5d5793}
+.titulo-icono h3{font-size:16px}
+.ficha-datos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-top:22px}
+.ficha-datos>div{display:flex;flex-direction:column;gap:6px}
+.ficha-datos small{font-size:11px;color:#83909a}
+.ficha-datos strong{font-size:13px;font-weight:700;overflow-wrap:anywhere}
+/* Módulos existentes */
+.admision-cabecera{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:3px}
+.admision-formulario{display:grid;gap:16px;margin-top:23px;padding:22px;background:#fafafd;border:1px solid #edeef2;border-radius:12px}
+.admision-formulario h3{font-size:15px;margin-bottom:3px}
+.admision-resumen{display:grid;gap:19px;margin-top:23px}
+.admision-resumen small{color:#7c8993;font-size:11px;font-weight:600}
+.admision-resumen p{margin-top:4px;color:#46535e;font-size:13px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+.escolaridad-registro,.interviniente-registro,.objetivo-registro{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:17px 0;border-bottom:1px solid #ebeff0}
+.escolaridad-registro:last-of-type,.interviniente-registro:last-of-type,.objetivo-registro:last-of-type{border-bottom:0}
+.escolaridad-registro>div,.interviniente-registro>div,.objetivo-registro>div{min-width:0}
+.escolaridad-registro strong,.interviniente-registro strong,.objetivo-registro strong,.seguimiento-fila strong{font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.escolaridad-registro p,.escolaridad-registro small,.interviniente-registro p,.objetivo-registro p{color:#7a8590;font-size:12px;margin-top:7px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.escolaridad-registro>button,.interviniente-registro>button,.objetivo-registro>button{background:#f5f3fb;color:#5b5197;border:1px solid #e9e5f7;padding:7px 11px;border-radius:8px;font-size:11px;font-weight:800;flex:none}
+.escolaridad-registro>button:hover,.interviniente-registro>button:hover,.objetivo-registro>button:hover{background:#eae5f6}
+.seguimiento-lista{margin-top:16px}
+.seguimiento-fila{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:16px 0;border-bottom:1px solid #edf0f1}
+.seguimiento-fila>div:first-child{min-width:0}
+.seguimiento-fila p,.seguimiento-registro p,.seguimiento-cronologia-item p{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:7px;color:#687781;font-size:12px;line-height:1.7}
+.seguimiento-acciones{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.seguimiento-acciones button,.seguimiento-link{display:inline-flex;align-items:center;gap:5px;border:0;background:#f4f2fb;color:#60569b;padding:7px 10px;cursor:pointer;font-weight:700;font-size:11px;border-radius:8px}
+.seguimiento-acciones button:hover,.seguimiento-link:hover{background:#eae5f7}
+.seguimiento-subpanel{margin-top:17px;padding:18px;background:#fafafc;border:1px solid #e9eaf0;border-radius:12px;min-width:0}
+.seguimiento-subpanel h3{font-size:14px;overflow-wrap:anywhere}
+.seguimiento-registro{padding:14px 0;border-bottom:1px solid var(--color-borde)}
+.seguimiento-registro:last-child{border-bottom:0}
+.seguimiento-registro b{color:#3e4b57}
+.seguimiento-evidencias{margin-top:12px}
+.seguimiento-evidencias .seguimiento-subpanel{margin-top:9px}
+.seguimiento-cronologia-control{padding-top:17px}
+.seguimiento-cronologia-item{position:relative;border-left:2px solid #d3cbed;padding:4px 0 17px 17px;margin-bottom:9px}
+.seguimiento-cronologia-item::before{content:"";position:absolute;width:9px;height:9px;left:-5.5px;top:8px;border-radius:50%;background:#776db5;box-shadow:0 0 0 4px #eeeaf8}
+.seguimiento-cronologia-item h3{font-size:13px}
+@media(max-width:1250px){.seguimiento-columnas{grid-template-columns:1fr}.informacion-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:1000px){.resumen-indicadores{gap:10px}.indicador{padding:18px;gap:11px}.informacion-grid{grid-template-columns:1fr}}
+@media(max-width:800px){
+ .pacientes-presentacion{padding:30px;min-height:0}
+ .presentacion-indicadores{flex-direction:column;align-self:stretch;justify-content:center}
+ .presentacion-indicador{min-width:120px;min-height:93px;padding:12px 16px}
+ .presentacion-indicador strong{font-size:21px}
+ .presentacion-indicador-icono{margin-bottom:2px}
+ .ficha-hero{padding:23px}
+ .ficha-monograma{width:60px;height:60px;border-radius:16px;font-size:20px}
+ .resumen-indicadores{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .indicador{flex-direction:column;align-items:flex-start;gap:8px}
+ .contexto-columnas{grid-template-columns:1fr;gap:16px}
+ .contexto-columnas>div{display:grid;grid-template-columns:25px 1fr;gap:0 10px;border:0;border-bottom:1px solid #edf0f1;padding:0 0 14px}
+ .contexto-icono{grid-row:1 / span 2;margin:0}.contexto-columnas p{grid-column:2}
+ .ficha-datos{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-
-.estructura-app .barra-lateral {
-  flex-shrink: 0;
+@media(max-width:650px){
+ .pacientes-presentacion{padding:27px 24px;display:block;margin:0 0 22px}
+ .pacientes-presentacion h1{font-size:36px}
+ .pacientes-presentacion-texto>p:not(.pacientes-subtitulo){margin-bottom:20px}
+ .presentacion-indicadores{flex-direction:row;align-items:stretch;gap:10px;margin-top:25px}
+ .presentacion-indicador{flex:1;min-width:0;min-height:90px}
+ .presentacion-indicador small{font-size:10px}
+ .pacientes-listado-panel{padding:22px 17px 11px}
+ .pacientes-listado-cabecera h2{font-size:18px}
+ .pacientes-fila{gap:11px;padding:12px 4px;min-height:74px}
+ .pacientes-avatar{width:41px;height:41px;border-radius:12px}
+ .pacientes-datos strong{font-size:13px}
+ .pacientes-estado{font-size:10px;padding:5px 8px}
+ .fila-flecha{display:none}
+ .pacientes-formulario{grid-template-columns:1fr}
+ .pacientes-panel{padding:22px 19px}
+ .ficha-volver{margin-bottom:13px}
+ .ficha-hero{padding:20px;align-items:flex-start;flex-direction:column;gap:16px;margin-bottom:20px}
+ .ficha-hero-identidad{gap:13px}
+ .ficha-monograma{width:52px;height:52px;font-size:17px;border-radius:14px}
+ .ficha-hero h1{font-size:24px}
+ .ficha-hero-detalles{align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:11px}
+ .ficha-fecha-inicio{font-size:11px}
+ .navegador-ficha{position:fixed;top:auto;bottom:10px;left:12px;right:12px;width:auto;max-width:none;margin:0;padding:6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;z-index:100;box-shadow:0 8px 40px rgba(37,44,62,.18);border:1px solid #e7e7ed;border-radius:15px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+ .ficha-tab{min-width:0;flex-direction:column;gap:3px;padding:8px 2px;min-height:54px;font-size:11px}
+ .ficha-tab svg{width:19px;height:19px}
+ .vista-encabezado{align-items:flex-start;margin-bottom:17px}
+ .vista-encabezado h2{font-size:24px}
+ .vista-encabezado .enlace-accion{display:none}
+ .resumen-indicadores{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:13px}
+ .indicador{padding:13px 10px;gap:10px}
+ .indicador-icono{width:35px;height:35px;border-radius:10px}
+ .indicador-icono svg{width:17px;height:17px}
+ .indicador strong{font-size:22px}
+ .indicador span:last-child{font-size:11px;line-height:1.3}
+ .resumen-grilla{grid-template-columns:1fr;gap:13px;margin-bottom:13px}
+ .tarjeta-resumen{padding:21px 20px 0}
+ .tarjeta-cabecera{margin-bottom:17px}
+ .seguimiento-columnas,.informacion-grid{display:block}
+ .seguimiento-columnas .pacientes-panel{padding:21px 18px}
+ .seguimiento-fila{flex-direction:column;gap:11px}
+ .seguimiento-acciones{justify-content:flex-start}
+ .admision-cabecera{gap:12px}
+ .admision-cabecera h2{font-size:15px}
+ .admision-formulario{padding:15px;gap:13px}
+ .ficha-datos{gap:14px}
+ .ficha-datos-panel{padding:22px 20px}
 }
-
-.contenido-principal {
-  flex: 1;
-  min-width: 0;
-  padding: 40px var(--padding-pagina);
-}
-
-.pagina-pacientes {
-  max-width: 850px;
-  margin: 0 auto;
-}
-
-/* Cabecera */
-.pacientes-cabecera {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.pacientes-subtitulo {
-  color: var(--color-primario);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  margin-bottom: 10px;
-}
-
-.pacientes-cabecera h1 {
-  font-size: 29px;
-  margin-bottom: 5px;
-}
-
-.pacientes-descripcion,
-.pacientes-nota {
-  color: var(--color-texto-secundario);
-  font-size: 13px;
-}
-
-.pacientes-boton {
-  background: var(--color-primario);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 11px 17px;
-  font-weight: 600;
-}
-
-/* Panel y listado */
-.pacientes-panel {
-  background: var(--color-superficie);
-  border: 1px solid var(--color-borde);
-  border-radius: 14px;
-  padding: 24px;
-  margin-bottom: 15px;
-}
-
-.pacientes-panel h2 {
-  font-size: 16px;
-}
-
-.pacientes-listado-cabecera {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.pacientes-listado-cabecera span {
-  color: var(--color-texto-secundario);
-  font-size: 12px;
-}
-
-.pacientes-busqueda,
-.pacientes-formulario input {
-  width: 100%;
-  padding: 11px;
-  border: 1px solid var(--color-borde);
-  border-radius: 8px;
-  outline-color: var(--color-primario);
-}
-
-.pacientes-busqueda {
-  margin-bottom: 15px;
-  background: var(--color-fondo);
-}
-
-.pacientes-fila {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  padding: 15px 5px;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.pacientes-fila:last-child {
-  border-bottom: none;
-}
-
-.pacientes-avatar {
-  display: grid;
-  place-items: center;
-  width: 43px;
-  height: 43px;
-  flex-shrink: 0;
-  background: var(--color-primario-suave);
-  color: var(--color-primario);
-  border-radius: 11px;
-  font-weight: 700;
-}
-
-.pacientes-datos {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.pacientes-datos small {
-  color: var(--color-texto-secundario);
-}
-
-.pacientes-estado {
-  background: var(--color-secundario-suave);
-  color: var(--color-secundario);
-  padding: 5px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-}
-
-.pacientes-vacio {
-  padding: 25px;
-  text-align: center;
-  color: var(--color-texto-secundario);
-}
-
-.pacientes-nota {
-  margin-top: 12px;
-}
-
-/* Formulario */
-.pacientes-formulario {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-  margin-top: 22px;
-}
-
-.pacientes-formulario label {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.pacientes-acciones {
-  grid-column: 1 / -1;
-  display: flex;
-  gap: 12px;
-}
-
-.pacientes-acciones button:not(.pacientes-boton) {
-  background: white;
-  border: 1px solid var(--color-borde);
-  border-radius: 8px;
-  padding: 10px 15px;
-}
-
-/* Celulares */
-@media (max-width: 700px) {
-  .pacientes-cabecera {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .pacientes-formulario {
-    grid-template-columns: 1fr;
-  }
-
-  .pacientes-acciones {
-    flex-wrap: wrap;
-  }
-}
-
-
-/* Ficha del paciente */
-.pacientes-fila {
-  width: 100%;
-  background: transparent;
-  border-top: 0;
-  border-left: 0;
-  border-right: 0;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.ficha-volver {
-  background: none;
-  border: none;
-  color: var(--color-primario);
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 24px;
-  font-weight: 600;
-}
-
-.ficha-datos {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  margin-top: 22px;
-}
-
-.ficha-datos div {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.ficha-datos small {
-  color: var(--color-texto-secundario);
-}
-
-@media (max-width: 600px) {
-  .ficha-datos {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Admisión */
-.admision-cabecera {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-}
-
-.admision-formulario {
-  display: grid;
-  gap: 16px;
-  margin-top: 22px;
-}
-
-.admision-formulario label {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.admision-formulario input,
-.admision-formulario textarea {
-  width: 100%;
-  padding: 11px;
-  border: 1px solid var(--color-borde);
-  border-radius: 8px;
-  font: inherit;
-  background: white;
-}
-
-.admision-formulario textarea {
-  resize: vertical;
-}
-
-.admision-resumen {
-  display: grid;
-  gap: 18px;
-  margin-top: 20px;
-}
-
-.admision-resumen small {
-  color: var(--color-texto-secundario);
-}
-
-.admision-resumen p {
-  margin-top: 5px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-/* Registros escolares */
-.escolaridad-registro {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.escolaridad-registro p,
-.escolaridad-registro small {
-  color: var(--color-texto-secundario);
-  font-size: 13px;
-  margin-top: 5px;
-}
-
-.escolaridad-registro button {
-  background: none;
-  border: none;
-  color: var(--color-primario);
-  cursor: pointer;
-  font-weight: 600;
-}
-
-/* Profesionales intervinientes */
-
-.interviniente-registro {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.interviniente-registro p {
-  color: var(--color-texto-secundario);
-  font-size: 13px;
-  margin-top: 5px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.interviniente-registro button {
-  background: none;
-  border: none;
-  color: var(--color-primario);
-  cursor: pointer;
-  font-weight: 600;
-}
-
-/* Objetivos de seguimiento */
-
-.objetivo-registro {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 15px;
-  padding: 18px 0;
-  border-bottom: 1px solid var(--color-borde);
-}
-
-.objetivo-registro p {
-  color: var(--color-texto-secundario);
-  font-size: 13px;
-  margin-top: 5px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.objetivo-registro button {
-  background: none;
-  border: none;
-  color: var(--color-primario);
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.admision-formulario select {
-  width: 100%;
-  padding: 11px;
-  border: 1px solid var(--color-borde);
-  border-radius: 8px;
-  font: inherit;
-  background: white;
-}
-/* Seguimiento: misma tipografía y componentes visuales de la ficha. */
-.seguimiento-lista { margin-top: 14px; }
-.seguimiento-fila {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  gap: 18px; padding: 16px 0; border-bottom: 1px solid var(--color-borde);
-}
-.seguimiento-fila p, .seguimiento-registro p, .seguimiento-cronologia-item p {
-  white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 6px;
-  color: var(--color-texto-secundario); font-size: 13px;
-}
-.seguimiento-acciones { display: flex; gap: 12px; flex-wrap: wrap; }
-.seguimiento-acciones button, .seguimiento-link {
-  background: transparent; border: none; color: var(--color-primario);
-  padding: 4px 0; cursor: pointer; font-weight: 600; font-size: 13px;
-}
-.seguimiento-subpanel {
-  margin-top: 18px; padding: 18px; background: var(--color-fondo);
-  border: 1px solid var(--color-borde); border-radius: 10px;
-}
-.seguimiento-registro { padding: 12px 0; border-bottom: 1px solid var(--color-borde); }
-.seguimiento-registro:last-child { border-bottom: none; }
-.seguimiento-registro b { color: var(--color-texto); }
-.seguimiento-evidencias { margin-top: 8px; }
-.seguimiento-evidencias .seguimiento-subpanel { margin-top: 8px; }
-.seguimiento-cronologia-control { padding-top: 18px; }
-.seguimiento-cronologia-item { border-left: 2px solid var(--color-primario); padding: 5px 0 18px 15px; margin-bottom: 16px; }
-.seguimiento-cronologia-item h3 { font-size: 14px; }
-@media (max-width: 600px) {
-  .seguimiento-fila, .seguimiento-subpanel .admision-cabecera { flex-direction: column; align-items: flex-start; }
-  .seguimiento-acciones { width: 100%; }
-}
+@media(max-width:360px){.pacientes-avatar{width:36px;height:36px}.pacientes-estado{font-size:9px}.pacientes-datos small{font-size:10px}.presentacion-indicador{padding:11px}.ficha-hero-textos>p:last-child{font-size:11px}.ficha-fecha-inicio{white-space:normal}}

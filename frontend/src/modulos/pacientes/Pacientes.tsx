@@ -1,5 +1,6 @@
 
 import { useEffect, useState, type FormEvent } from "react";
+import { ArrowRight, Search, Plus, UsersRound, UserCheck, ShieldCheck } from "lucide-react";
 import {
   listarPacientes,
   guardarPaciente,
@@ -101,6 +102,8 @@ export default function Pacientes() {
     }
   }
 
+  const pacientesActivos = pacientes.filter((paciente) => paciente.activo).length;
+
   // Mostrar la ficha del paciente seleccionado.
   if (seleccionado) {
     return (
@@ -113,24 +116,22 @@ export default function Pacientes() {
 
   return (
     <div className="pagina-pacientes">
-      <div className="pacientes-cabecera">
-        <div>
-          <p className="pacientes-subtitulo">
-            PANEL DE SEGUIMIENTO
-          </p>
-          <h1>Pacientes</h1>
-          <p className="pacientes-descripcion">
-            Consultá los perfiles y continuá el seguimiento de cada paciente.
-          </p>
+      <header className="pacientes-presentacion">
+        <div className="pacientes-presentacion-texto">
+          <p className="pacientes-subtitulo">ESPACIO DE TRABAJO</p>
+          <h1>Pacientes<span className="punto-titulo">.</span></h1>
+          <p>Un espacio para organizar cada acompañamiento, registrar encuentros y consultar la evolución.</p>
+          <button type="button" className="pacientes-boton pacientes-boton-grande" onClick={() => setCreando(!creando)}>
+            {creando ? "Cerrar formulario" : <><Plus size={18} aria-hidden="true" /> Nuevo paciente</>}
+          </button>
         </div>
-
-        <button
-          className="pacientes-boton"
-          onClick={() => setCreando(!creando)}
-        >
-          {creando ? "Cerrar formulario" : "+ Nuevo paciente"}
-        </button>
-      </div>
+        <div className="presentacion-indicadores" aria-label="Resumen de pacientes">
+          <div className="presentacion-indicador"><span className="presentacion-indicador-icono"><UserCheck size={19} /></span>
+            <strong>{cargando ? "—" : pacientesActivos}</strong><small>En seguimiento</small></div>
+          <div className="presentacion-indicador"><span className="presentacion-indicador-icono"><UsersRound size={19} /></span>
+            <strong>{cargando ? "—" : pacientes.length}</strong><small>Registrados</small></div>
+        </div>
+      </header>
 
       {error && <p role="alert">{error}</p>}
 
@@ -191,20 +192,17 @@ export default function Pacientes() {
         </section>
       )}
 
-      <section className="pacientes-panel">
+      <section className="pacientes-panel pacientes-listado-panel">
         <div className="pacientes-listado-cabecera">
-          <h2>Listado</h2>
-          <span>{pacientes.length} registrados</span>
+          <div><p className="seccion-eyebrow">PERFILES</p><h2>Listado de pacientes</h2></div>
+          <span>{pacientesFiltrados.length} de {pacientes.length}</span>
         </div>
-
-        <input
-          className="pacientes-busqueda"
-          type="search"
-          placeholder="Buscar por nombre o apellido..."
-          aria-label="Buscar pacientes"
-          value={busqueda}
-          onChange={(evento) => setBusqueda(evento.target.value)}
-        />
+        <label className="busqueda-contenedor">
+          <Search size={19} aria-hidden="true" />
+          <input className="pacientes-busqueda" type="search"
+            placeholder="Buscar por nombre o apellido" aria-label="Buscar pacientes"
+            value={busqueda} onChange={(evento) => setBusqueda(evento.target.value)} />
+        </label>
 
         <div className="pacientes-lista">
           {cargando && <p>Cargando pacientes...</p>}
@@ -234,9 +232,10 @@ export default function Pacientes() {
                 </small>
               </div>
 
-              <span className="pacientes-estado">
+              <span className={`pacientes-estado ${paciente.activo ? "" : "inactivo"}`}>
                 {paciente.activo ? "Activo" : "Inactivo"}
               </span>
+              <ArrowRight className="fila-flecha" size={18} aria-hidden="true" />
             </button>
           ))}
 
@@ -250,9 +249,7 @@ export default function Pacientes() {
         </div>
       </section>
 
-      <p className="pacientes-nota">
-        Para este TFI se utilizarán datos ficticios.
-      </p>
+      <p className="pacientes-nota"><ShieldCheck size={16} aria-hidden="true" /> Para las pruebas del TFI se utilizan datos ficticios.</p>
     </div>
   );
 }
