@@ -6,6 +6,7 @@ import AdmisionPaciente, { type Admision } from "./AdmisionPaciente";
 import EscolaridadPaciente, { type Escolaridad, type EscolaridadGuardar } from "./EscolaridadPaciente";
 import ProfesionalesIntervinientes, { type ProfesionalTratante, type ProfesionalTratanteGuardar } from "./ProfesionalesIntervinientes";
 import ObjetivosPaciente, { type Objetivo, type ObjetivoGuardar } from "./ObjetivosPaciente";
+import SesionesPaciente from "./SesionesPaciente";
 
 type Props = {
   paciente: Paciente;
@@ -28,6 +29,7 @@ export default function FichaPaciente({
   const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
   const [cargandoObjetivos, setCargandoObjetivos] = useState(true);
   const [errorObjetivos, setErrorObjetivos] = useState("");
+  const [revisionEvidencias, setRevisionEvidencias] = useState(0);
 
   useEffect(() => {
     let vigente = true;
@@ -272,6 +274,14 @@ export default function FichaPaciente({
         onGuardar={guardarObjetivoPaciente}
         cargando={cargandoObjetivos}
         error={errorObjetivos}
+        pacienteId={paciente.id}
+        revisionEvidencias={revisionEvidencias}
+      />
+
+      <SesionesPaciente
+        pacienteId={paciente.id}
+        objetivos={objetivos}
+        onCambiarObservaciones={() => setRevisionEvidencias((n) => n + 1)}
       />
     </div>
   );

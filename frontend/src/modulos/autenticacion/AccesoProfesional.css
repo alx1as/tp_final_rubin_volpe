@@ -1,0 +1,40 @@
+.pantalla-acceso, .pantalla-cargando {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.tarjeta-acceso {
+  width: min(100%, 440px);
+  padding: 36px;
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-grande);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-suave);
+}
+
+.acceso-subtitulo { color: var(--color-primario); font-size: 12px; font-weight: 700; letter-spacing: .06em; }
+.tarjeta-acceso h1 { margin-top: 10px; font-size: 26px; }
+.acceso-descripcion { color: var(--color-texto-secundario); margin: 8px 0 24px; }
+.formulario-acceso { display: grid; gap: 15px; }
+.formulario-acceso label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; }
+.formulario-acceso input {
+  width: 100%; padding: 11px 12px;
+  border: 1px solid var(--color-borde); border-radius: var(--radio-chico);
+  background: var(--color-superficie); color: var(--color-texto);
+}
+.formulario-acceso input:focus { outline: 2px solid var(--color-primario-suave); border-color: var(--color-primario); }
+.acceso-ayuda { margin-top: -10px; font-size: 12px; color: var(--color-texto-secundario); }
+.acceso-error { font-size: 13px; color: #a33535; }
+.acceso-boton {
+  background: var(--color-primario); color: #fff;
+  border: 0; border-radius: var(--radio-chico); padding: 12px; font-weight: 600;
+}
+.acceso-boton:disabled { opacity: .6; cursor: wait; }
+.acceso-cambiar {
+  display: block; margin: 18px auto 0; padding: 5px;
+  border: 0; background: transparent; color: var(--color-primario); font-weight: 600;
+}
+@media (max-width: 480px) { .tarjeta-acceso { padding: 24px; } }

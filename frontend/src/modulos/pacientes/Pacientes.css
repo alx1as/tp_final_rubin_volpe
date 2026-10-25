@@ -378,3 +378,34 @@
   font: inherit;
   background: white;
 }
+/* Seguimiento: misma tipografía y componentes visuales de la ficha. */
+.seguimiento-lista { margin-top: 14px; }
+.seguimiento-fila {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 18px; padding: 16px 0; border-bottom: 1px solid var(--color-borde);
+}
+.seguimiento-fila p, .seguimiento-registro p, .seguimiento-cronologia-item p {
+  white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 6px;
+  color: var(--color-texto-secundario); font-size: 13px;
+}
+.seguimiento-acciones { display: flex; gap: 12px; flex-wrap: wrap; }
+.seguimiento-acciones button, .seguimiento-link {
+  background: transparent; border: none; color: var(--color-primario);
+  padding: 4px 0; cursor: pointer; font-weight: 600; font-size: 13px;
+}
+.seguimiento-subpanel {
+  margin-top: 18px; padding: 18px; background: var(--color-fondo);
+  border: 1px solid var(--color-borde); border-radius: 10px;
+}
+.seguimiento-registro { padding: 12px 0; border-bottom: 1px solid var(--color-borde); }
+.seguimiento-registro:last-child { border-bottom: none; }
+.seguimiento-registro b { color: var(--color-texto); }
+.seguimiento-evidencias { margin-top: 8px; }
+.seguimiento-evidencias .seguimiento-subpanel { margin-top: 8px; }
+.seguimiento-cronologia-control { padding-top: 18px; }
+.seguimiento-cronologia-item { border-left: 2px solid var(--color-primario); padding: 5px 0 18px 15px; margin-bottom: 16px; }
+.seguimiento-cronologia-item h3 { font-size: 14px; }
+@media (max-width: 600px) {
+  .seguimiento-fila, .seguimiento-subpanel .admision-cabecera { flex-direction: column; align-items: flex-start; }
+  .seguimiento-acciones { width: 100%; }
+}
