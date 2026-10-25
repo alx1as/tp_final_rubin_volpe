@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { LogOut, UserRound } from "lucide-react";
 import "./App.css";
 import SideBar from "./components/sidebar/SideBar";
 import Pacientes from "./modulos/pacientes/Pacientes";
@@ -70,13 +71,17 @@ export default function App() {
       <SideBar />
       <main className="contenido-principal">
         <header className="cabecera-sesion">
-          <span>{profesional.nombre} {profesional.apellido}</span>
-          <button type="button" onClick={salir} disabled={cerrando}>
-            {cerrando ? "Cerrando..." : "Cerrar sesión"}
+          <EstadoConexion />
+          <div className="cabecera-sesion-usuario">
+            <span className="cabecera-avatar" aria-hidden="true"><UserRound size={17} strokeWidth={1.8} /></span>
+            <span className="cabecera-nombre">{profesional.nombre} {profesional.apellido}</span>
+          </div>
+          <button type="button" className="boton-salir" onClick={salir} disabled={cerrando}>
+            <LogOut size={16} strokeWidth={1.8} aria-hidden="true" />
+            <span>{cerrando ? "Cerrando..." : "Salir"}</span>
           </button>
         </header>
-        {errorSalida && <p role="alert">{errorSalida}</p>}
-        <EstadoConexion />
+        {errorSalida && <p role="alert" className="mensaje-error">{errorSalida}</p>}
         <Pacientes />
       </main>
     </div>

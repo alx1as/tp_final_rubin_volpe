@@ -10,6 +10,7 @@ type Props = {
   pacienteId: number;
   objetivos: Objetivo[];
   onCambiarObservaciones: () => void;
+  onCambiarSesiones?: () => void;
 };
 
 const mostrarFecha = (fecha: string) => fecha.split("-").reverse().join("/");
@@ -28,7 +29,7 @@ const etiquetas: Record<(typeof camposTexto)[number], string> = {
   resultado: "Resultado", nota_libre: "Nota libre",
 };
 
-export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObservaciones }: Props) {
+export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObservaciones, onCambiarSesiones }: Props) {
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -93,6 +94,7 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
       setFormSesion(null);
       setSesionSeleccionada(guardada.id);
       setRevisionCronologia((n) => n + 1);
+      onCambiarSesiones?.();
     } catch (fallo) {
       setErrorSesion(fallo instanceof Error ? fallo.message : "No se pudo guardar la sesión.");
     } finally {
