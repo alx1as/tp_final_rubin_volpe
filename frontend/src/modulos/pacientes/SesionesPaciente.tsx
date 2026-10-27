@@ -1,10 +1,11 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   guardarObservacion, guardarSesion, listarObservaciones, listarSesiones,
   type Observacion, type ObservacionGuardar, type Sesion,
 } from "../../servicios/api-seguimiento";
 import type { Objetivo } from "./ObjetivosPaciente";
 import CronologiaPaciente from "./CronologiaPaciente";
+import GrabadoraNota from "./GrabadoraNota";
 
 type Props = {
   pacienteId: number;
@@ -30,6 +31,17 @@ const etiquetas: Record<(typeof camposTexto)[number], string> = {
 };
 
 export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObservaciones, onCambiarSesiones }: Props) {
+  const notaSesionRef = useRef<HTMLTextAreaElement>(null);
+  const notaObservacionRef = useRef<HTMLTextAreaElement>(null);
+
+  // Las transcripciones se incorporan al formulario para revisión, no se guardan automáticamente.
+  function insertarTexto(referencia: { current: HTMLTextAreaElement | null }, texto: string) {
+    const campo = referencia.current;
+    if (!campo) return;
+    campo.value = [campo.value.trim(), texto.trim()].filter(Boolean).join("\n\n");
+    campo.focus();
+  }
+
   const [sesiones, setSesiones] = useState<Sesion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
@@ -170,8 +182,10 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
             </select>
           </label>
           <label>Nota general (opcional)
-            <textarea name="nota_general" rows={3} defaultValue={sesionParaEditar?.nota_general ?? ""} />
+            <textarea ref={notaSesionRef} name="nota_general" rows={3}
+              defaultValue={sesionParaEditar?.nota_general ?? ""} />
           </label>
+          <GrabadoraNota onConfirmarTexto={(texto) => insertarTexto(notaSesionRef, texto)} />
           {errorSesion && <p role="alert">{errorSesion}</p>}
           <div className="pacientes-acciones">
             <button className="pacientes-boton" type="submit" disabled={guardandoSesion}>
@@ -244,10 +258,12 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
               </label>
               {camposTexto.map((campo) => (
                 <label key={campo}>{etiquetas[campo]}
-                  <textarea name={campo} rows={campo === "nota_libre" ? 4 : 2}
+                  <textarea ref={campo === "nota_libre" ? notaObservacionRef : undefined}
+                    name={campo} rows={campo === "nota_libre" ? 4 : 2}
                     defaultValue={observacionParaEditar?.[campo] ?? ""} />
                 </label>
               ))}
+              <GrabadoraNota onConfirmarTexto={(texto) => insertarTexto(notaObservacionRef, texto)} />
               <p className="pacientes-descripcion">Completá los campos que correspondan. Al menos uno debe tener texto.</p>
               {errorFormObs && <p role="alert">{errorFormObs}</p>}
               <div className="pacientes-acciones">

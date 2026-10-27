@@ -1,0 +1,13 @@
+.grabadora-nota {border:1px solid #e5e3ef;border-radius:11px;padding:14px 16px;background:#fff;display:grid;gap:10px;min-width:0}
+.grabadora-nota-titulo {font-size:12px;font-weight:800;color:#514982}
+.grabadora-nota-ayuda {font-size:11px;color:#697683;line-height:1.55}
+.grabadora-nota-acciones {display:flex;flex-wrap:wrap;gap:9px;align-items:center}
+.grabadora-nota-acciones button,.grabadora-nota-revision button {min-height:36px;padding:8px 12px;border:1px solid #dcd8ee;border-radius:9px;background:#f3f0fb;color:#594f91;font-size:12px;font-weight:700}
+.grabadora-nota-acciones button:hover,.grabadora-nota-revision button:hover {background:#e8e2f7}
+.grabadora-nota-acciones .grabadora-nota-detenida {background:#fff1ec;border-color:#f2d7ca;color:#9c5b49}
+.grabadora-nota-indicador {font-size:12px;color:#a24f43;font-weight:700}
+.grabadora-nota audio {width:100%;max-width:420px;min-width:0;height:39px}
+.grabadora-nota-revision {display:grid;gap:12px}
+.grabadora-nota-revision label {display:grid;gap:7px;font-size:12px;font-weight:700;color:#45515d}
+.grabadora-nota-revision textarea {width:100%;min-width:0;min-height:90px;padding:10px 12px;border:1px solid #dfe5e9;border-radius:10px;resize:vertical;color:var(--color-texto)}
+.grabadora-nota-revision button {justify-self:start}

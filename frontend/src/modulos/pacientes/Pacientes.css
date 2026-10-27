@@ -115,6 +115,11 @@
 .ficha-datos>div{display:flex;flex-direction:column;gap:6px}
 .ficha-datos small{font-size:11px;color:#83909a}
 .ficha-datos strong{font-size:13px;font-weight:700;overflow-wrap:anywhere}
+.ficha-datos-cabecera{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ficha-datos-formulario{margin-top:20px}
+.ficha-datos-mensaje{font-size:12px;line-height:1.5;margin-top:14px}
+.ficha-datos-mensaje.error{color:#a33f3f}
+.ficha-datos-mensaje.exito{color:#357363}
 /* Módulos existentes */
 .admision-cabecera{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:3px}
 .admision-formulario{display:grid;gap:16px;margin-top:23px;padding:22px;background:#fafafd;border:1px solid #edeef2;border-radius:12px}
@@ -187,7 +192,7 @@
  .ficha-hero h1{font-size:24px}
  .ficha-hero-detalles{align-items:flex-start;flex-direction:row;flex-wrap:wrap;gap:11px}
  .ficha-fecha-inicio{font-size:11px}
- .navegador-ficha{position:fixed;top:auto;bottom:10px;left:12px;right:12px;width:auto;max-width:none;margin:0;padding:6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;z-index:100;box-shadow:0 8px 40px rgba(37,44,62,.18);border:1px solid #e7e7ed;border-radius:15px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+ .navegador-ficha{position:fixed;top:auto;bottom:10px;left:12px;right:12px;width:auto;max-width:none;margin:0;padding:6px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;z-index:100;box-shadow:0 8px 40px rgba(37,44,62,.18);border:1px solid #e7e7ed;border-radius:15px;padding-bottom:max(6px,env(safe-area-inset-bottom))}
  .ficha-tab{min-width:0;flex-direction:column;gap:3px;padding:8px 2px;min-height:54px;font-size:11px}
  .ficha-tab svg{width:19px;height:19px}
  .vista-encabezado{align-items:flex-start;margin-bottom:17px}
