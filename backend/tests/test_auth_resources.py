@@ -20,6 +20,12 @@ for child in CHILDREN:
     OPERATIONS.extend([('GET', f'/api/pacientes/1/{child}'), ('POST', f'/api/pacientes/1/{child}'), ('PUT', f'/api/pacientes/1/{child}/1')])
     OPERATIONS.extend([('GET', f'/api/pacientes/1/{child}/1'), ('PATCH', f'/api/pacientes/1/{child}/1')])
 OPERATIONS.extend([
+    ('POST','/api/transcripciones'),
+    ('POST','/api/pacientes/1/informes/generar'),
+    ('GET','/api/pacientes/1/cronologia'),
+    ('GET','/api/pacientes/1/informes'), ('POST','/api/pacientes/1/informes'),
+    ('GET','/api/pacientes/1/informes/1'),
+    ('PATCH','/api/pacientes/1/informes/1'),
     ('GET','/api/pacientes/1/sesiones'), ('POST','/api/pacientes/1/sesiones'),
     ('GET','/api/pacientes/1/sesiones/1'), ('PATCH','/api/pacientes/1/sesiones/1'),
     ('GET','/api/pacientes/1/sesiones/1/observaciones'), ('POST','/api/pacientes/1/sesiones/1/observaciones'),

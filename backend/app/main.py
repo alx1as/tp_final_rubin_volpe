@@ -12,16 +12,20 @@ from sqlalchemy.exc import (
 
 from app.api.admisiones import router as admisiones_router
 from app.api.auth import router as auth_router
+from app.api.cronologia import router as cronologia_router
 from app.api.escolaridades import router as escolaridades_router
 from app.api.health import router as health_router
+from app.api.informes import router as informes_router
 from app.api.objetivos import router as objetivos_router
 from app.api.observaciones import router as observaciones_router
 from app.api.pacientes import router as pacientes_router
 from app.api.profesionales_tratantes import router as profesionales_tratantes_router
 from app.api.sesiones import router as sesiones_router
+from app.api.transcripciones import router as transcripciones_router
 from app.core.config import Settings, load_settings
 from app.core.origins import ValidateOriginMiddleware
 from app.db.session import build_engine
+from app.integrations.contratos import IntegracionNoConfigurada, IntegracionNoDisponible
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -48,7 +52,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(profesionales_tratantes_router, prefix="/api")
     application.include_router(objetivos_router, prefix="/api")
     application.include_router(sesiones_router, prefix="/api")
+    application.include_router(cronologia_router, prefix="/api")
+    application.include_router(informes_router, prefix="/api")
     application.include_router(observaciones_router, prefix="/api")
+    application.include_router(transcripciones_router, prefix="/api")
+
+    @application.exception_handler(IntegracionNoConfigurada)
+    async def integration_unconfigured(request: Request, error: IntegracionNoConfigurada):
+        return JSONResponse(status_code=503, content={"detail": "Servicio externo no configurado"})
+
+    @application.exception_handler(IntegracionNoDisponible)
+    async def integration_unavailable(request: Request, error: IntegracionNoDisponible):
+        return JSONResponse(status_code=503, content={"detail": "Servicio externo no disponible"})
 
     @application.exception_handler(RequestValidationError)
     async def validation_error(request: Request, error: RequestValidationError):

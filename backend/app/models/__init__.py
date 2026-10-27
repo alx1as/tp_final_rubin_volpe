@@ -9,3 +9,4 @@ from .objetivo import Objetivo
 from .sesion_autenticacion import SesionAutenticacion
 from .sesion import Sesion
 from .observacion import Observacion
+from .informe import Informe

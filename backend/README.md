@@ -57,7 +57,7 @@ Invoke-RestMethod http://127.0.0.1:8000/api/pacientes -WebSession $sesionApi
 Invoke-RestMethod http://127.0.0.1:8000/api/auth/logout -Method Post -WebSession $sesionApi
 ```
 
-El frontend actual todavía no incorpora registro/login/logout ni envía `credentials: "include"`. Sus solicitudes de dominio recibirán `401` hasta que su responsable realice esa adaptación externa. El alcance de este trabajo es solo backend. En desarrollo, usar el mismo nombre de host para ambas aplicaciones (por ejemplo, `127.0.0.1` en ambas), conforme a la cookie `SameSite=Lax`. Los contratos del perfil y su transición están en [CONTRATOS.md](CONTRATOS.md).
+El frontend incorporado por los PR #12/#13 incluye registro/login/logout, cookies y manejo de 401. En desarrollo usa el proxy de Vite (`/api` hacia `http://127.0.0.1:8000`) para conservar el host visible de la cookie. Desde la raíz, `npm.cmd run dev` inicia ambos procesos; requiere las dependencias de frontend y backend instaladas y la base inicializada. La integración completa desde el navegador se valida por separado de las pruebas de API. Los contratos están en [CONTRATOS.md](CONTRATOS.md).
 
 ## Pacientes y perfil
 
@@ -142,6 +142,102 @@ autorizado y a sesiones de ese paciente. No se duplican fuentes ni se guarda una
 tabla de evidencias. Sesión/observación se editan mediante PATCH; no hay PUT ni
 DELETE para esos recursos nuevos. Desactivar al paciente conserva todo el historial.
 
+## Cronología
+
+`GET P/cronologia` requiere sesión y devuelve una página de sesiones con sus
+observaciones. Cada item incluye `id`, `paciente_id`, `fecha`, `presente`,
+`nota_general` y `observaciones` (campos de `ObservacionRespuesta`). Se incluyen
+ausencias y sesiones sin observaciones; estas últimas llevan una lista vacía.
+
+Parámetros opcionales: `desde` y `hasta` en formato `YYYY-MM-DD`, ambos inclusivos
+sobre la fecha de sesión. Un intervalo invertido o una fecha inválida responde
+422. Orden: fecha/ID de sesión descendentes y observaciones por ID ascendente.
+Usa los mismos `offset`/`limit` del perfil; `total` cuenta sesiones filtradas antes
+de paginar. Una sesión conserva todas sus observaciones dentro de su página.
+
+Ejemplo: `GET P/cronologia?desde=2026-01-01&hasta=2026-01-31&offset=0&limit=20`.
+La consulta deriva de los registros actuales, sin tabla de cronología ni copias
+de fuentes. Los cambios en sesiones/observaciones aparecen al consultar y
+desactivar al paciente conserva el acceso a su historial. La interfaz existente
+todavía arma su cronología mediante sesiones/observaciones; adoptar este endpoint
+con filtros corresponde al trabajo de frontend.
+
+## Informes manuales
+
+`GET/POST P/informes` permite listar y crear informes del paciente autorizado;
+`GET/PATCH P/informes/{informe_id}` consulta o edita un informe individual.
+La creación responde 201 y la lectura/edición 200. Las listas usan
+`items/total/offset/limit`, ordenadas por
+fecha e ID descendentes. No se necesita un proveedor de audio ni de IA.
+
+El cuerpo de creación requiere `titulo`, `periodo_desde`, `periodo_hasta` y
+`contenido`. `fecha` es opcional y toma la fecha local del servidor por defecto.
+Título y contenido se recortan y deben contener texto. Las fechas usan
+`YYYY-MM-DD`; el final del período no puede ser anterior al inicio (422).
+El período puede abarcar un solo día o no contener sesiones.
+
+Todo informe se crea como `borrador`, con `asistido_ia=false` por defecto. El
+contrato permite indicar `asistido_ia=true` al guardar contenido revisado que
+recibió asistencia; esa marca no genera texto ni certifica su origen. No se
+puede crear directamente un informe `finalizado`. La base genera el ID y el
+paciente procede de la ruta; no se aceptan IDs o propietarios en el cuerpo.
+No hay DELETE ni copias de filas de sesiones/observaciones dentro de informes.
+
+PATCH conserva campos omitidos y rechaza null en todos los campos del informe.
+Valida el período completo resultante antes de escribir; para mover ambos extremos,
+enviarlos juntos. Un PATCH vacío no cambia el registro. Editar texto no finaliza
+el informe: enviar explícitamente `{"estado":"finalizado"}` después de revisarlo.
+Los informes finalizados siguen siendo editables; se puede volver a `borrador`
+mediante PATCH explícito. No se implementa una firma ni un bloqueo irreversible.
+Editar/finalizar un informe no cambia las sesiones u observaciones utilizadas
+como fuente. Estado y demás cambios se guardan en la misma transacción.
+
+## Preparación de audio e IA (E6)
+
+Estas rutas están preparadas para recibir adaptadores reales, pero no hay un
+proveedor elegido ni configurado por defecto. Las dependencias
+`obtener_transcriptor`/`obtener_generador_informes` devuelven None; los adaptadores
+simulados están únicamente en pruebas. En ejecución normal ambas rutas responden
+503: `{"detail":"Servicio externo no configurado"}`. Una falla o una respuesta
+vacía/inválida de un adaptador responde 503: `{"detail":"Servicio externo no disponible"}`.
+Los errores privados del proveedor no se devuelven ni se registran.
+
+| Método | Ruta | Contrato |
+| --- | --- | --- |
+| POST | `/api/transcripciones` | Multipart con archivo `audio`; 200 con `{"texto":"..."}` editable. |
+| POST | `P/informes/generar` | JSON de título/período; 200 con borrador editable, sin ID ni guardado automático. |
+
+Ambas requieren sesión y cuenta activa; generar verifica además paciente propio.
+La transcripción no crea registros: se revisa/corrige/descarta en la interfaz y
+solo se guarda el texto confirmado mediante los endpoints de sesiones u
+observaciones. Un archivo vacío con proveedor configurado o un archivo ausente
+responde 422. Nombre/MIME son metadatos; el futuro proveedor valida el formato y
+decodifica el audio. El stream y su spool temporal se cierran al terminar o fallar.
+Los adaptadores reales deberán fijar timeouts y limpiar cualquier temporal propio.
+
+La generación recibe `titulo`, `periodo_desde` y `periodo_hasta`, con fechas ISO
+e intervalo inclusivo válido. Se recogen todas las sesiones del período con sus
+observaciones y los objetivos propios vinculados, sin truncar por la paginación
+de listas. Las fuentes son copias públicas separadas de ORM. Si no hay sesiones,
+el contexto está vacío: el adaptador debe informar insuficiencia de registros sin
+inventar hechos ni diagnósticos. La aplicación devuelve `estado=borrador` y
+`asistido_ia=true`, fecha local del servidor y contenido editable; no modifica las
+fuentes ni guarda un informe. Después de revisarlo, usar `POST P/informes`.
+
+Para recibir multipart se agregó `python-multipart` a los requisitos. Actualizar
+el entorno existente desde la raíz:
+
+```powershell
+& ./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+```
+
+Los protocolos de `app/integrations/contratos.py` y sus dependencias definen los
+puntos de conexión. No se agregaron variables de proveedor ni credenciales a E6.
+Elegir proveedores, implementar sus adaptadores y demostrar el recorrido real
+pertenece a MVP-T01/T02/T03; E6 no implica transcripción o generación de IA reales.
+El registro manual y las consultas siguen funcionando si una integración falla.
+Los cuerpos, respuestas y el flujo de revisión/guardado están en CONTRATOS.md.
+
 ## Salud y conexión
 
 ```powershell
@@ -215,6 +311,28 @@ con el mismo runner; para seleccionarlos, pasar sus rutas como argumentos.
 sesiones con asistencia explícita, observaciones con contenido mínimo, vínculos
 del mismo paciente, evidencia ordenada, restricciones SQL y conservación del
 historial. Las pruebas globales de autenticación también cubren todas sus rutas.
+
+`test_chronology.py` comprueba límites inclusivos, orden y desempates, paginación
+por sesión con observaciones completas, consulta conjunta, fuentes actuales e
+aislamiento. `test_reports.py` cubre persistencia de informes, texto/fechas/estados,
+edición parcial con validación completa, finalización explícita, fuentes intactas,
+constraints SQL y rollback. Ambos usan exclusivamente el PostgreSQL temporal del
+runner. Los contratos OpenAPI, las respuestas ante caída de base y las pruebas
+globales de sesión/cuenta activa incluyen las cinco operaciones nuevas de E5.
+
+E5 utiliza las tablas existentes y no requiere una migración adicional. La
+interfaz de informes y la adopción del endpoint de cronología son trabajo de
+frontend; los contratos y un ejemplo de creación están en CONTRATOS.md. Audio e
+IA tienen contratos y endpoints preparados en E6; sus proveedores e integraciones
+reales siguen pendientes de MVP-T01/T02/T03.
+
+`test_integration_contracts.py`, `test_transcription.py`, `test_generation.py` y
+`test_integration_failures.py` verifican E6 con adaptadores definidos solo en
+pruebas: sustitución, texto editable, cierre de audio/spool en éxito y falla,
+fuentes completas/autorizadas y concurrentes, borrador temporal compatible con
+guardado posterior, errores sanitizados y continuidad manual. Los contratos
+OpenAPI y las pruebas globales de sesión/cuenta activa cubren ambas rutas nuevas.
+Estas pruebas no llaman a proveedores reales ni acreditan el flujo del navegador.
 
 Referencias de implementación: [sesiones SQLModel con FastAPI](https://fastapi.tiangolo.com/tutorial/sql-databases/), [configuración con Pydantic Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) y [recuperación del pool SQLAlchemy](https://docs.sqlalchemy.org/en/21/core/pooling.html).
 
