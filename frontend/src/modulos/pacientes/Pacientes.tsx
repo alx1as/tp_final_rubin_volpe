@@ -110,6 +110,12 @@ export default function Pacientes() {
       <FichaPaciente
         paciente={seleccionado}
         onVolver={() => setSeleccionado(null)}
+        onPacienteActualizado={(actualizado) => {
+          setSeleccionado(actualizado);
+          setPacientes((actuales) =>
+            actuales.map((registro) => registro.id === actualizado.id ? actualizado : registro)
+          );
+        }}
       />
     );
   }

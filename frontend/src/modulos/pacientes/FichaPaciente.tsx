@@ -9,17 +9,21 @@ import EscolaridadPaciente, { type Escolaridad, type EscolaridadGuardar } from "
 import ProfesionalesIntervinientes, { type ProfesionalTratante, type ProfesionalTratanteGuardar } from "./ProfesionalesIntervinientes";
 import ObjetivosPaciente, { type Objetivo, type ObjetivoGuardar } from "./ObjetivosPaciente";
 import SesionesPaciente from "./SesionesPaciente";
+import InformesPaciente from "./InformesPaciente";
+import DatosPersonalesPaciente from "./DatosPersonalesPaciente";
 
-type Pestana = "resumen" | "seguimiento" | "informacion";
+type Pestana = "resumen" | "seguimiento" | "informes" | "informacion";
 
 type Props = {
   paciente: Paciente;
   onVolver: () => void;
+  onPacienteActualizado: (actualizado: Paciente) => void;
 };
 
 export default function FichaPaciente({
   paciente,
   onVolver,
+  onPacienteActualizado,
 }: Props) {
   const [admision, setAdmision] = useState<Admision | null>(null);
   const [cargandoAdmision, setCargandoAdmision] = useState(true);
@@ -219,6 +223,7 @@ export default function FichaPaciente({
   const tabs: { id: Pestana; texto: string; icono: typeof Layers3 }[] = [
     { id: "resumen", texto: "Resumen", icono: Layers3 },
     { id: "seguimiento", texto: "Seguimiento", icono: Activity },
+    { id: "informes", texto: "Informes", icono: FileText },
     { id: "informacion", texto: "Información", icono: ClipboardList },
   ];
   function cambiarPestana(valor: Pestana) {
@@ -342,14 +347,16 @@ export default function FichaPaciente({
         </div>
       </div>
 
+      <div id="panel-informes" role="tabpanel" aria-labelledby="pestana-informes" hidden={pestana !== "informes"} className="vista-pestana">
+        <div className="vista-encabezado"><div><p className="vista-sobretitulo">DOCUMENTACIÓN PROFESIONAL</p><h2>Informes</h2>
+          <p>Borradores e informes del seguimiento del paciente.</p></div></div>
+        <InformesPaciente pacienteId={paciente.id} />
+      </div>
+
       <div id="panel-informacion" role="tabpanel" aria-labelledby="pestana-informacion" hidden={pestana !== "informacion"} className="vista-pestana">
         <div className="vista-encabezado"><div><p className="vista-sobretitulo">ANTECEDENTES Y CONTEXTO</p><h2>Información del paciente</h2>
           <p>Datos personales y contexto del acompañamiento.</p></div></div>
-        <section className="pacientes-panel ficha-datos-panel"><div className="titulo-icono"><UserRound size={19} /><h3>Datos personales</h3></div>
-          <div className="ficha-datos"><div><small>Nombre completo</small><strong>{paciente.nombre} {paciente.apellido}</strong></div>
-            <div><small>Fecha de nacimiento</small><strong>{fecha(paciente.fecha_nacimiento)}</strong></div>
-            <div><small>Inicio del seguimiento</small><strong>{fecha(paciente.fecha_inicio_seguimiento)}</strong></div>
-            <div><small>Estado</small><strong>{paciente.activo ? "Activo" : "Inactivo"}</strong></div></div></section>
+        <DatosPersonalesPaciente paciente={paciente} onActualizar={onPacienteActualizado} />
         <div className="informacion-grid"><div className="informacion-principal"><AdmisionPaciente
           admision={admision} fechaInicial={paciente.fecha_inicio_seguimiento}
           onGuardar={guardarAdmisionPaciente} cargando={cargandoAdmision} error={errorAdmision} /></div>

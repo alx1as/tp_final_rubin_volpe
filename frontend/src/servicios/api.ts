@@ -142,6 +142,20 @@ export function guardarPaciente(datos: PacienteCrear): Promise<Paciente> {
   });
 }
 
+// Editar los datos básicos de un paciente ya registrado.
+export type PacienteActualizar = Pick<
+  Paciente,
+  "nombre" | "apellido" | "fecha_nacimiento" | "fecha_inicio_seguimiento"
+>;
+
+export function editarPaciente(pacienteId: number, datos: PacienteActualizar): Promise<Paciente> {
+  return solicitar(`/api/pacientes/${pacienteId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
+  });
+}
+
 // Cada paciente tiene una sola admisión; un 404 significa que aún no fue creada.
 export async function obtenerAdmision(pacienteId: number): Promise<Admision | null> {
   try {
