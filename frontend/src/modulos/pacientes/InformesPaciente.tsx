@@ -1,13 +1,17 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Check, FilePlus2, FileText, Pencil, RotateCcw } from "lucide-react";
+import { Check, Eye, FilePlus2, FileText, Pencil, RotateCcw, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   crearInforme,
   editarInforme,
+  generarBorradorIA,
   listarInformes,
   type EstadoInforme,
   type Informe,
   type InformeGuardar,
 } from "../../servicios/api-informes";
+import { listarSesiones, type Sesion } from "../../servicios/api-seguimiento";
 import "./InformesPaciente.css";
 
 type Props = { pacienteId: number };
@@ -24,6 +28,7 @@ const formularioVacio = (): InformeGuardar => ({
   periodo_desde: hoyLocal(),
   periodo_hasta: hoyLocal(),
   contenido: "",
+  asistido_ia: false,
 });
 
 const fechaLegible = (valor: string) => valor.split("-").reverse().join("/");
@@ -32,17 +37,21 @@ const camposInforme = (informe: Informe): InformeGuardar => ({
   periodo_desde: informe.periodo_desde,
   periodo_hasta: informe.periodo_hasta,
   contenido: informe.contenido,
+  asistido_ia: informe.asistido_ia,
 });
 
 export default function InformesPaciente({ pacienteId }: Props) {
   const [informes, setInformes] = useState<Informe[]>([]);
+  const [sesiones, setSesiones] = useState<Sesion[] | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [generando, setGenerando] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [actual, setActual] = useState<Informe | null>(null);
   const [creando, setCreando] = useState(false);
   const [formulario, setFormulario] = useState<InformeGuardar>(formularioVacio);
+  const [modoContenido, setModoContenido] = useState<"edicion" | "vista_previa">("edicion");
 
   useEffect(() => {
     let vigente = true;
@@ -57,6 +66,18 @@ export default function InformesPaciente({ pacienteId }: Props) {
     return () => { vigente = false; };
   }, [pacienteId]);
 
+  useEffect(() => {
+    let vigente = true;
+    setSesiones(null);
+    listarSesiones(pacienteId)
+      .then((datos) => { if (vigente) setSesiones(datos); })
+      .catch(() => { if (vigente) setSesiones(null); });
+    return () => { vigente = false; };
+  }, [pacienteId]);
+
+  const sesionesEnPeriodo = sesiones?.filter((sesion) =>
+    sesion.fecha >= formulario.periodo_desde && sesion.fecha <= formulario.periodo_hasta
+  );
   const editando = creando || actual !== null;
   const cambioPendiente = creando
     ? formulario.titulo.trim() !== "" || formulario.contenido.trim() !== "" ||
@@ -68,20 +89,30 @@ export default function InformesPaciente({ pacienteId }: Props) {
   }
 
   function nuevoInforme() {
+    if (generando) return;
     if (!confirmarSalida()) return;
     setActual(null);
     setCreando(true);
-    setFormulario(formularioVacio());
+    const nuevo = formularioVacio();
+    if (sesiones && sesiones.length > 0) {
+      const fechas = sesiones.map((sesion) => sesion.fecha).sort();
+      nuevo.periodo_desde = fechas[0];
+      nuevo.periodo_hasta = fechas[fechas.length - 1];
+    }
+    setFormulario(nuevo);
+    setModoContenido("edicion");
     setError("");
     setMensaje("");
   }
 
   function seleccionarInforme(informe: Informe) {
+    if (generando) return;
     if (actual?.id === informe.id && !creando) return;
     if (!confirmarSalida()) return;
     setActual(informe);
     setCreando(false);
     setFormulario(camposInforme(informe));
+    setModoContenido(informe.contenido.trim() ? "vista_previa" : "edicion");
     setError("");
     setMensaje("");
   }
@@ -89,6 +120,40 @@ export default function InformesPaciente({ pacienteId }: Props) {
   function actualizar(campo: keyof InformeGuardar, valor: string) {
     setFormulario((anterior) => ({ ...anterior, [campo]: valor }));
     setMensaje("");
+  }
+
+  async function generar() {
+    setError("");
+    setMensaje("");
+    if (!formulario.titulo.trim() || !formulario.periodo_desde || !formulario.periodo_hasta ||
+        formulario.periodo_hasta < formulario.periodo_desde) {
+      setError("Completá el título y revisá las fechas antes de generar el borrador.");
+      return;
+    }
+    if (sesionesEnPeriodo && sesionesEnPeriodo.length === 0) {
+      setError("No hay sesiones registradas en el período seleccionado. Revisá las fechas antes de generar.");
+      return;
+    }
+    if (formulario.contenido.trim() &&
+      !window.confirm("Se reemplazará el texto del editor por el borrador de IA. ¿Continuar?")) return;
+
+    setGenerando(true);
+    try {
+      const borrador = await generarBorradorIA(pacienteId, {
+        titulo: formulario.titulo.trim(),
+        periodo_desde: formulario.periodo_desde,
+        periodo_hasta: formulario.periodo_hasta,
+      });
+      setFormulario((anterior) => ({
+        ...anterior, contenido: borrador.contenido, asistido_ia: true,
+      }));
+      setModoContenido("vista_previa");
+      setMensaje("Borrador generado. Revisá y corregí el texto antes de guardarlo.");
+    } catch (fallo) {
+      setError(fallo instanceof Error ? fallo.message : "No se pudo generar el borrador.");
+    } finally {
+      setGenerando(false);
+    }
   }
 
   async function guardar(estado?: EstadoInforme) {
@@ -140,7 +205,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
             <h3>Informes guardados</h3>
             <p>Registros del seguimiento</p>
           </div>
-          <button type="button" className="pacientes-boton" onClick={nuevoInforme}>
+          <button type="button" className="pacientes-boton" onClick={nuevoInforme} disabled={generando}>
             <FilePlus2 size={16} aria-hidden="true" /> Nuevo
           </button>
         </div>
@@ -150,7 +215,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
             {informes.map((informe) => (
               <button key={informe.id} type="button"
                 className={`informes-item ${actual?.id === informe.id && !creando ? "activo" : ""}`}
-                onClick={() => seleccionarInforme(informe)}>
+                onClick={() => seleccionarInforme(informe)} disabled={generando}>
                 <span className="informes-item-titulo"><FileText size={16} aria-hidden="true" /> {informe.titulo}</span>
                 <span className="informes-item-periodo">{fechaLegible(informe.periodo_desde)} – {fechaLegible(informe.periodo_hasta)}</span>
                 <span className="informes-item-pie">
@@ -168,7 +233,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
             <FileText size={29} strokeWidth={1.6} aria-hidden="true" />
             <h3>Redactar o revisar un informe</h3>
             <p>Seleccioná un informe guardado o creá uno nuevo. Los borradores se pueden continuar más adelante.</p>
-            <button type="button" className="pacientes-boton" onClick={nuevoInforme}>Crear informe</button>
+            <button type="button" className="pacientes-boton" onClick={nuevoInforme} disabled={generando}>Crear informe</button>
           </div>
         ) : (
           <form onSubmit={enviar} className="informes-formulario">
@@ -181,7 +246,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
                 {actual.estado === "borrador" ? "Borrador" : "Finalizado"}
               </span>}
             </div>
-            <fieldset disabled={guardando}>
+            <fieldset disabled={guardando || generando}>
               <label>Título
                 <input value={formulario.titulo} onChange={(e) => actualizar("titulo", e.target.value)}
                   maxLength={200} required placeholder="Ej.: Informe de seguimiento trimestral" />
@@ -196,25 +261,62 @@ export default function InformesPaciente({ pacienteId }: Props) {
                     onChange={(e) => actualizar("periodo_hasta", e.target.value)} required />
                 </label>
               </div>
-              <label>Contenido del informe
-                <textarea value={formulario.contenido} onChange={(e) => actualizar("contenido", e.target.value)}
-                  rows={15} required placeholder="Redactá el informe a partir de los registros del paciente..." />
-              </label>
+              {sesionesEnPeriodo && <p className="informes-ayuda">
+                {sesionesEnPeriodo.length === 0
+                  ? "No hay sesiones registradas entre esas fechas."
+                  : `${sesionesEnPeriodo.length} sesión(es) registradas en el período seleccionado.`}
+              </p>}
+              <div className="informes-contenido">
+                <div className="informes-contenido-cabecera">
+                  <span>Contenido del informe</span>
+                  <div className="informes-contenido-modos" role="group" aria-label="Modo de visualización">
+                    <button type="button"
+                      className={modoContenido === "edicion" ? "activo" : ""}
+                      onClick={() => setModoContenido("edicion")}
+                      aria-pressed={modoContenido === "edicion"}>
+                      <Pencil size={15} aria-hidden="true" /> Editar
+                    </button>
+                    <button type="button"
+                      className={modoContenido === "vista_previa" ? "activo" : ""}
+                      onClick={() => setModoContenido("vista_previa")}
+                      aria-pressed={modoContenido === "vista_previa"}>
+                      <Eye size={15} aria-hidden="true" /> Vista previa
+                    </button>
+                  </div>
+                </div>
+                {modoContenido === "edicion" ? (
+                  <textarea value={formulario.contenido} onChange={(e) => actualizar("contenido", e.target.value)}
+                    rows={15} placeholder="Redactá el informe a partir de los registros del paciente..." />
+                ) : (
+                  <div className="informes-preview">
+                    {formulario.contenido.trim() ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{formulario.contenido}</ReactMarkdown>
+                    ) : (
+                      <p className="informes-preview-vacio">Todavía no hay contenido para mostrar.</p>
+                    )}
+                  </div>
+                )}
+              </div>
             </fieldset>
-            {actual?.asistido_ia && <p className="informes-ayuda">Este informe contiene texto asistido por IA. Revisá su contenido antes de finalizarlo.</p>}
+            {formulario.asistido_ia && <p className="informes-ayuda">Este borrador fue asistido por IA. Revisá su contenido antes de finalizarlo.</p>}
             {error && <p className="informes-error" role="alert">{error}</p>}
             {mensaje && <p className="informes-exito" role="status">{mensaje}</p>}
             <div className="informes-acciones">
-              <button type="submit" className="pacientes-boton" disabled={guardando}>
+              {(creando || actual?.estado === "borrador") &&
+                <button type="button" className="informes-boton-secundario"
+                  disabled={guardando || generando} onClick={() => void generar()}>
+                  <Sparkles size={16} aria-hidden="true" /> {generando ? "Generando..." : "Generar con IA"}
+                </button>}
+              <button type="submit" className="pacientes-boton" disabled={guardando || generando}>
                 <Check size={16} aria-hidden="true" /> {guardando ? "Guardando..." : creando ? "Guardar borrador" : "Guardar cambios"}
               </button>
               {!creando && actual?.estado === "borrador" &&
-                <button type="button" className="informes-boton-secundario" disabled={guardando}
+                <button type="button" className="informes-boton-secundario" disabled={guardando || generando}
                   onClick={() => void guardar("finalizado")}>
                   <Pencil size={15} aria-hidden="true" /> Finalizar informe
                 </button>}
               {!creando && actual?.estado === "finalizado" &&
-                <button type="button" className="informes-boton-secundario" disabled={guardando}
+                <button type="button" className="informes-boton-secundario" disabled={guardando || generando}
                   onClick={() => void guardar("borrador")}>
                   <RotateCcw size={15} aria-hidden="true" /> Volver a borrador
                 </button>}
