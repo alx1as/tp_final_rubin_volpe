@@ -194,11 +194,10 @@ como fuente. Estado y demás cambios se guardan en la misma transacción.
 
 ## Preparación de audio e IA (E6)
 
-Estas rutas están preparadas para recibir adaptadores reales, pero no hay un
-proveedor elegido ni configurado por defecto. Las dependencias
-`obtener_transcriptor`/`obtener_generador_informes` devuelven None; los adaptadores
-simulados están únicamente en pruebas. En ejecución normal ambas rutas responden
-503: `{"detail":"Servicio externo no configurado"}`. Una falla o una respuesta
+La transcripción continúa sin proveedor configurado (se integra por separado).
+La generación de informes dispone de adaptador para **Groq**, que se activa si
+`GROQ_API_KEY` está configurada en `backend/.env`. Sin esa clave, solo la ruta de
+generación responde 503: `{"detail":"Servicio externo no configurado"}`. Una falla o una respuesta
 vacía/inválida de un adaptador responde 503: `{"detail":"Servicio externo no disponible"}`.
 Los errores privados del proveedor no se devuelven ni se registran.
 
@@ -231,11 +230,29 @@ el entorno existente desde la raíz:
 & ./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
 ```
 
-Los protocolos de `app/integrations/contratos.py` y sus dependencias definen los
-puntos de conexión. No se agregaron variables de proveedor ni credenciales a E6.
-Elegir proveedores, implementar sus adaptadores y demostrar el recorrido real
-pertenece a MVP-T01/T02/T03; E6 no implica transcripción o generación de IA reales.
-El registro manual y las consultas siguen funcionando si una integración falla.
+Los protocolos de `app/integrations/contratos.py` y sus dependencias mantienen
+separadas las integraciones de audio e informes. El adaptador de informes utiliza
+`POST https://api.groq.com/openai/v1/chat/completions` con timeout de 30 segundos.
+Para activarlo, copiar `backend/.env.example` a `backend/.env` si aún no existe y
+agregar allí la clave obtenida en https://console.groq.com/keys:
+
+```dotenv
+GROQ_API_KEY=gsk_TU_CLAVE_PRIVADA
+GROQ_MODEL=openai/gpt-oss-20b
+```
+
+**Nunca** colocar la clave en React, `VITE_*`, GitHub o capturas. La generación
+solo envía sesiones, observaciones y objetivos relacionados con el período: no
+incluye el nombre, apellido ni nacimiento del paciente. Sin embargo, las notas
+pueden contener información sensible. Para la demostración, usar **datos ficticios**;
+antes de tratar información real, revisar el marco de confidencialidad, las
+condiciones del proveedor y los controles de retención.
+
+Desde la pantalla de Informes, crear o elegir un borrador, indicar el título y el
+período y pulsar **Generar con IA**. La respuesta se carga en el editor, no se
+persiste automáticamente y queda identificada como asistida por IA cuando se
+confirma **Guardar**. El texto siempre debe revisarse antes de finalizarse.
+El registro manual y las consultas siguen funcionando si falla el proveedor.
 Los cuerpos, respuestas y el flujo de revisión/guardado están en CONTRATOS.md.
 
 ## Salud y conexión

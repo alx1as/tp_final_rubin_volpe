@@ -1,0 +1,427 @@
+{
+  "paciente": {
+    "nombre": "Martina",
+    "apellido": "Demo",
+    "fecha_nacimiento": "2017-09-12",
+    "fecha_inicio_seguimiento": "2026-04-09"
+  },
+  "admision": {
+    "fecha": "2026-04-09",
+    "motivo_consulta": "La familia y la escuela solicitan acompañamiento para organizar tareas, comprender consignas de varios pasos y sostener la participación escolar sin depender continuamente de indicaciones adultas.",
+    "antecedentes_personales": "Le interesan los cuentos ilustrados, los juegos de construcción y las actividades con materiales concretos. La familia refiere que evita iniciar tareas largas si no sabe por dónde empezar. No se consignan diagnósticos.",
+    "antecedentes_evolutivos": "La familia describe un desarrollo cotidiano sin particularidades relevantes para este registro ficticio. Se propone indagar las estrategias que utiliza frente a consignas nuevas.",
+    "antecedentes_salud": "Sin información clínica incorporada al legajo de prueba. No se registran diagnósticos ni tratamientos médicos.",
+    "grupo_familiar": "Convive con dos adultos referentes y una hermana mayor. La familia acompaña las tareas escolares por la tarde.",
+    "tratamientos_actuales": "Acompañamiento psicopedagógico semanal de abril a noviembre de 2026 y articulación periódica con docentes. Los demás contactos registrados son ficticios.",
+    "observaciones": "Caso íntegramente ficticio creado para probar el sistema. Se acuerda trabajar con objetivos observables, registrar avances y dificultades, y revisar el proceso junto con la familia y la escuela."
+  },
+  "escolaridades": [
+    {
+      "institucion": "Escuela Primaria Ficticia Nº 1000",
+      "nivel": "Primario",
+      "grado_anio_sala": "2.º grado",
+      "modalidad": "Común",
+      "jornada": "Simple, turno mañana",
+      "fecha_inicio": "2025-03-05",
+      "fecha_fin": "2025-12-12",
+      "apoyos": "Acompañamiento general de la docente en consignas escritas.",
+      "observaciones": "Antecedente escolar ficticio. Se describió mayor autonomía en tareas breves que en secuencias de varios pasos.",
+      "referente_nombre": "Laura Ejemplo",
+      "referente_rol": "Docente de grado (ficticia)",
+      "referente_contacto": "docente2025@example.invalid"
+    },
+    {
+      "institucion": "Escuela Primaria Ficticia Nº 1000",
+      "nivel": "Primario",
+      "grado_anio_sala": "3.º grado",
+      "modalidad": "Común",
+      "jornada": "Simple, turno mañana",
+      "fecha_inicio": "2026-03-04",
+      "fecha_fin": null,
+      "apoyos": "Consignas segmentadas, lista breve de pasos y anticipación de actividades extensas.",
+      "observaciones": "Durante el año se comienza a usar la agenda digital del curso; en septiembre deja de utilizarse la agenda en papel.",
+      "referente_nombre": "Sofía Ejemplo",
+      "referente_rol": "Docente de grado (ficticia)",
+      "referente_contacto": "docente2026@example.invalid"
+    }
+  ],
+  "profesionales_tratantes": [
+    {
+      "nombre": "Lic. Julia Ejemplo",
+      "especialidad": "Psicopedagogía",
+      "contacto": "psicopedagogia@example.invalid",
+      "fecha_inicio": "2026-04-09",
+      "fecha_fin": null,
+      "observaciones": "Contacto ficticio de referencia para articulación con la escuela."
+    },
+    {
+      "nombre": "Prof. Tomás Ejemplo",
+      "especialidad": "Apoyo escolar",
+      "contacto": "apoyo@example.invalid",
+      "fecha_inicio": "2026-05-05",
+      "fecha_fin": null,
+      "observaciones": "Contacto ficticio. Acompaña una vez por semana la planificación de tareas escolares."
+    }
+  ],
+  "objetivos": [
+    {
+      "clave": "consignas",
+      "descripcion": "Comprender consignas escritas de dos o tres pasos y verificar qué debe hacer antes de iniciar la actividad.",
+      "fecha_inicio": "2026-04-09",
+      "estado": "activo",
+      "fecha_cierre": null,
+      "observaciones_generales": "Se trabaja con lectura compartida, subrayado de verbos y reformulación oral. Se busca mayor autonomía sin retirar de golpe los apoyos."
+    },
+    {
+      "clave": "organizacion",
+      "descripcion": "Preparar materiales y organizar una secuencia breve de tareas utilizando una lista de verificación.",
+      "fecha_inicio": "2026-04-09",
+      "estado": "activo",
+      "fecha_cierre": null,
+      "observaciones_generales": "Se observa mejor desempeño con rutinas conocidas; la generalización a actividades nuevas continúa en seguimiento."
+    },
+    {
+      "clave": "pedir_ayuda",
+      "descripcion": "Pedir ayuda de manera específica cuando no comprende una consigna, antes de abandonar la tarea.",
+      "fecha_inicio": "2026-04-16",
+      "estado": "cumplido",
+      "fecha_cierre": "2026-10-15",
+      "observaciones_generales": "Se considera cumplido en el contexto de las sesiones por uso espontáneo y repetido de pedidos concretos. No se infiere generalización automática a todos los ámbitos."
+    },
+    {
+      "clave": "agenda_papel",
+      "descripcion": "Registrar tareas pendientes en una agenda de papel con apoyo decreciente.",
+      "fecha_inicio": "2026-05-14",
+      "estado": "cerrado",
+      "fecha_cierre": "2026-09-17",
+      "observaciones_generales": "Se cierra por cambio de herramienta en la escuela: el grupo pasa a usar agenda digital. Cierre administrativo, no implica cumplimiento."
+    },
+    {
+      "clave": "lectura",
+      "descripcion": "Identificar información explícita relevante en textos breves y relacionarla con preguntas concretas.",
+      "fecha_inicio": "2026-05-28",
+      "estado": "activo",
+      "fecha_cierre": null,
+      "observaciones_generales": "Con textos breves responde preguntas literales con apoyo. Las inferencias y consignas de extensión mayor siguen siendo difíciles."
+    }
+  ],
+  "sesiones": [
+    {
+      "fecha": "2026-04-09",
+      "presente": true,
+      "nota_general": "Primer encuentro. Se conversó con la familia y se realizó una actividad exploratoria breve con tarjetas de instrucciones. Se acuerda registrar observaciones sin establecer diagnósticos.",
+      "observaciones": [
+        {
+          "objetivo_clave": "consignas",
+          "contexto": "Actividad de armado con tres instrucciones escritas.",
+          "conducta_observable": "Leyó la primera instrucción y comenzó sin revisar las siguientes; necesitó dos recordatorios para completar la secuencia.",
+          "intervencion": "Lectura conjunta y señalamiento de cada paso en una lista.",
+          "resultado": "Terminó la actividad con acompañamiento verbal sostenido.",
+          "nota_libre": "Registro inicial; no puede interpretarse como evolución."
+        },
+        {
+          "objetivo_clave": "organizacion",
+          "contexto": "Preparación de materiales para una actividad con tarjetas y lápices.",
+          "conducta_observable": "Comenzó sin reunir todos los materiales; interrumpió dos veces para buscarlos.",
+          "intervencion": "Se ofreció una lista visual de materiales.",
+          "resultado": "Pudo completar la preparación siguiendo la lista con ayuda."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-04-16",
+      "presente": true,
+      "nota_general": "Se introduce la estrategia de detenerse, leer y decir qué necesita hacer antes de comenzar.",
+      "observaciones": [
+        {
+          "objetivo_clave": "pedir_ayuda",
+          "contexto": "Consigna de clasificación con un ejemplo ambiguo.",
+          "conducta_observable": "Permaneció en silencio y dejó de manipular el material durante aproximadamente un minuto.",
+          "intervencion": "Se modeló la pregunta: «¿Me podés explicar esta parte?». ",
+          "resultado": "Repitió la pregunta con apoyo y pudo retomar la actividad."
+        },
+        {
+          "objetivo_clave": "consignas",
+          "contexto": "Dos instrucciones consecutivas de clasificación.",
+          "conducta_observable": "Pudo explicar oralmente la primera; omitió la segunda al empezar.",
+          "intervencion": "Se subrayaron los dos verbos de acción.",
+          "resultado": "Completó ambos pasos con una indicación adicional."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-04-30",
+      "presente": true,
+      "nota_general": "Se trabaja con una secuencia de pasos y un cierre de autoevaluación simple.",
+      "observaciones": [
+        {
+          "objetivo_clave": "organizacion",
+          "contexto": "Actividad de recorte, pegado y escritura con cinco materiales.",
+          "conducta_observable": "Preparó tres de cinco materiales sin ayuda y consultó la lista para los dos restantes.",
+          "intervencion": "Lista visible y repaso final de materiales.",
+          "resultado": "Redujo las interrupciones para buscar útiles respecto del primer encuentro."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-05-14",
+      "presente": true,
+      "nota_general": "La familia comenta dificultades para recordar tareas para el día siguiente. Se inicia una agenda breve en papel.",
+      "observaciones": [
+        {
+          "objetivo_clave": "agenda_papel",
+          "contexto": "Registro de dos tareas escolares comunicadas oralmente.",
+          "conducta_observable": "Anotó una tarea y omitió la fecha de entrega de la segunda.",
+          "intervencion": "Modelo de tres campos: materia, tarea y fecha.",
+          "resultado": "Completó ambos registros con acompañamiento."
+        },
+        {
+          "objetivo_clave": "pedir_ayuda",
+          "contexto": "Momento de completar la fecha de una tarea.",
+          "conducta_observable": "Preguntó «¿Dónde va la fecha?» después de una indicación general.",
+          "intervencion": "Se señaló el campo correspondiente sin resolver el resto de la tarea.",
+          "resultado": "Continuó el registro."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-05-28",
+      "presente": true,
+      "nota_general": "Se incorpora lectura de un cuento breve con preguntas literales. La actividad resultó más motivadora que las fichas de consignas aisladas.",
+      "observaciones": [
+        {
+          "objetivo_clave": "lectura",
+          "contexto": "Cuento ilustrado de una página, cuatro preguntas literales.",
+          "conducta_observable": "Respondió dos preguntas sin apoyo; buscó el fragmento correcto cuando se le señaló el párrafo en las otras dos.",
+          "intervencion": "Se enseñó a localizar palabras clave en el texto.",
+          "resultado": "Respondió las cuatro preguntas con apoyos diferenciados."
+        },
+        {
+          "objetivo_clave": "consignas",
+          "contexto": "Indicación escrita para ordenar tres escenas del cuento.",
+          "conducta_observable": "Leyó la consigna completa antes de mover las tarjetas.",
+          "intervencion": "Se pidió reformular oralmente el orden requerido.",
+          "resultado": "Ordenó correctamente las escenas con una confirmación verbal inicial."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-06-11",
+      "presente": true,
+      "nota_general": "Trabajo combinado de organización y lectura; se alternaron tareas cortas y pausas breves.",
+      "observaciones": [
+        {
+          "objetivo_clave": "organizacion",
+          "contexto": "Secuencia de tres actividades con lista de verificación.",
+          "conducta_observable": "Marcó dos pasos terminados sin recordatorio; olvidó comprobar el tercero.",
+          "intervencion": "Revisión conjunta al cerrar la sesión.",
+          "resultado": "Reconoció el paso omitido y completó el cierre."
+        },
+        {
+          "objetivo_clave": "lectura",
+          "contexto": "Texto breve sin ilustraciones, tres preguntas.",
+          "conducta_observable": "Respondió correctamente dos preguntas literales; la tercera requería relacionar dos oraciones y solicitó ayuda.",
+          "intervencion": "Se propuso releer dos fragmentos sin proporcionar la respuesta.",
+          "resultado": "Respondió después de la relectura guiada."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-06-25",
+      "presente": false,
+      "nota_general": "Sesión no realizada por ausencia informada por la familia. No se registran observaciones de desempeño.",
+      "observaciones": []
+    },
+    {
+      "fecha": "2026-07-09",
+      "presente": true,
+      "nota_general": "Se retoman las estrategias luego de la inasistencia. La rutina de organización necesita recordatorios al cambiar de actividad.",
+      "observaciones": [
+        {
+          "objetivo_clave": "organizacion",
+          "contexto": "Cambio de una tarea de lectura a otra con materiales de construcción.",
+          "conducta_observable": "Guardó un material pero comenzó la segunda tarea antes de despejar el espacio.",
+          "intervencion": "Se retomó la lista con dos pasos de cierre.",
+          "resultado": "Reorganizó el espacio con un recordatorio."
+        },
+        {
+          "objetivo_clave": "pedir_ayuda",
+          "contexto": "Instrucción nueva para armar una figura.",
+          "conducta_observable": "Preguntó «¿Primero hago la base o los lados?» sin que se le sugiriera cómo preguntar.",
+          "intervencion": "Se devolvió la consigna para que eligiera una secuencia.",
+          "resultado": "Pudo iniciar el armado de forma autónoma."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-08-06",
+      "presente": true,
+      "nota_general": "Seguimiento luego del receso escolar. La familia comenta que usa la lista cuando se la deja visible, pero rara vez la prepara sola.",
+      "observaciones": [
+        {
+          "objetivo_clave": "consignas",
+          "contexto": "Dos consignas escritas de tres pasos, una conocida y otra nueva.",
+          "conducta_observable": "Completó la consigna conocida sin intervenciones; en la nueva omitió el paso intermedio.",
+          "intervencion": "Se invitó a numerar los verbos y volver a leer antes de empezar.",
+          "resultado": "Detectó el paso omitido después de la revisión.",
+          "nota_libre": "La mejora aparece más claramente en tareas familiares que en nuevas."
+        },
+        {
+          "objetivo_clave": "agenda_papel",
+          "contexto": "Anotación de tareas semanales.",
+          "conducta_observable": "Usó los tres campos de la agenda con una verificación al finalizar.",
+          "intervencion": "Recordatorio para revisar las fechas.",
+          "resultado": "Dos registros completos."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-08-27",
+      "presente": true,
+      "nota_general": "Se realiza una actividad integrada de comprensión y planificación.",
+      "observaciones": [
+        {
+          "objetivo_clave": "lectura",
+          "contexto": "Lectura de un texto informativo breve con cinco preguntas literales.",
+          "conducta_observable": "Ubicó información para cuatro preguntas; en una confundió dos datos próximos.",
+          "intervencion": "Relectura comparando las dos oraciones relevantes.",
+          "resultado": "Corrigió la respuesta al justificarla con el texto."
+        },
+        {
+          "objetivo_clave": "organizacion",
+          "contexto": "Preparación autónoma de materiales para lectura y escritura.",
+          "conducta_observable": "Preparó todos los materiales usando la lista, sin recordatorios externos.",
+          "intervencion": "Se dejó la lista disponible pero no se señaló su uso.",
+          "resultado": "Completó la preparación antes de comenzar."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-09-17",
+      "presente": true,
+      "nota_general": "La docente comunica que la escuela pasó a usar agenda digital. Se cierra el objetivo de agenda en papel por cambio de herramienta, no por falta ni logro de desempeño.",
+      "observaciones": [
+        {
+          "objetivo_clave": "agenda_papel",
+          "contexto": "Revisión del sistema escolar actual para anotar tareas.",
+          "conducta_observable": "Explicó que ya consulta la agenda digital del curso acompañada por un adulto.",
+          "intervencion": "Se compararon los pasos de registro en papel y digital.",
+          "resultado": "Se acuerda no continuar evaluando el uso de agenda en papel; se deja constancia del cambio de contexto."
+        },
+        {
+          "objetivo_clave": "pedir_ayuda",
+          "contexto": "Consigna de interpretación de una tabla simple.",
+          "conducta_observable": "Consultó espontáneamente el significado de una columna y reformuló su pregunta cuando no quedó claro.",
+          "intervencion": "Se aclaró el término solicitado.",
+          "resultado": "Resolvió la actividad sin intervenciones posteriores."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-10-01",
+      "presente": true,
+      "nota_general": "Se registra que mejora la solicitud de ayuda, mientras persisten dificultades en algunas consignas extensas.",
+      "observaciones": [
+        {
+          "objetivo_clave": "consignas",
+          "contexto": "Consigna escrita de tres pasos con dos condiciones.",
+          "conducta_observable": "Identificó los tres pasos, pero pasó por alto una condición en el segundo.",
+          "intervencion": "Se subrayaron palabras condicionales y se revisó el paso antes de ejecutarlo.",
+          "resultado": "Completó la actividad con un apoyo puntual."
+        },
+        {
+          "objetivo_clave": "pedir_ayuda",
+          "contexto": "Misma actividad, antes de iniciar el segundo paso.",
+          "conducta_observable": "Pidió aclaración concreta sobre la condición sin que se le indicara preguntar.",
+          "intervencion": "Se aclaró la condición sin resolver la actividad.",
+          "resultado": "Continuó por su cuenta."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-10-15",
+      "presente": true,
+      "nota_general": "En distintas tareas se observan pedidos de ayuda claros y espontáneos. Se cierra como cumplido el objetivo específico de solicitar ayuda, manteniendo el seguimiento de otros objetivos.",
+      "observaciones": [
+        {
+          "objetivo_clave": "pedir_ayuda",
+          "contexto": "Dos actividades nuevas, una de lectura y una de armado.",
+          "conducta_observable": "Formuló preguntas específicas y diferentes para cada actividad antes de abandonar o interrumpir la tarea.",
+          "intervencion": "Se atendieron las preguntas y se dejó que decidiera cómo continuar.",
+          "resultado": "Retomó ambas actividades sin nuevos recordatorios.",
+          "nota_libre": "La evidencia es de las sesiones; no permite afirmar que esta conducta aparezca siempre en el aula."
+        },
+        {
+          "objetivo_clave": "lectura",
+          "contexto": "Texto informativo de dos párrafos.",
+          "conducta_observable": "Localizó información literal, pero necesitó apoyo para conectar datos de ambos párrafos.",
+          "intervencion": "Pregunta orientadora y búsqueda de frases relacionadas.",
+          "resultado": "Respondió con ayuda, por lo que el objetivo de lectura sigue activo."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-10-29",
+      "presente": true,
+      "nota_general": "La escuela informa mayor iniciativa para comenzar tareas habituales. Se observa que los cambios de rutina todavía requieren apoyos.",
+      "observaciones": [
+        {
+          "objetivo_clave": "organizacion",
+          "contexto": "Organización de materiales para actividad conocida seguida de actividad nueva.",
+          "conducta_observable": "Se organizó sola para la primera tarea; en la segunda necesitó volver a consultar la lista tras omitir un material.",
+          "intervencion": "Se señaló el momento de revisar la lista, sin indicar qué faltaba.",
+          "resultado": "Identificó y buscó el material faltante."
+        },
+        {
+          "objetivo_clave": "consignas",
+          "contexto": "Secuencia nueva con tres instrucciones y control final.",
+          "conducta_observable": "Leyó las instrucciones antes de comenzar y verificó dos pasos de tres sin indicación.",
+          "intervencion": "Recordatorio final para comprobar el último paso.",
+          "resultado": "Terminó la secuencia con una ayuda puntual."
+        }
+      ]
+    },
+    {
+      "fecha": "2026-11-03",
+      "presente": true,
+      "nota_general": "Encuentro de revisión. Se comparan avances en tareas familiares y nuevas; se acuerda continuar apoyos en comprensión de consignas complejas y planificación autónoma.",
+      "observaciones": [
+        {
+          "objetivo_clave": "lectura",
+          "contexto": "Dos textos breves con preguntas literales y una pregunta que relaciona información.",
+          "conducta_observable": "Respondió las preguntas literales sin apoyo. Solicitó releer cuando debía relacionar información de ambos textos.",
+          "intervencion": "Se ofreció tiempo de relectura y se pidió señalar las frases relevantes.",
+          "resultado": "Identificó las frases, pero todavía necesitó una pregunta orientadora para elaborar la respuesta."
+        },
+        {
+          "objetivo_clave": "organizacion",
+          "contexto": "Planificación de tres actividades con tiempo estimado.",
+          "conducta_observable": "Organizó el orden de las actividades y completó la primera; reajustó el plan al surgir una dificultad en la segunda.",
+          "intervencion": "Se invitó a revisar la lista y elegir un nuevo orden.",
+          "resultado": "Terminó dos actividades y dejó una pendiente explícita para el próximo encuentro.",
+          "nota_libre": "Se conserva la dificultad observada y no se presenta como objetivo cumplido."
+        }
+      ]
+    }
+  ],
+  "informes": [
+    {
+      "titulo": "Informe de seguimiento inicial - DEMO",
+      "fecha": "2026-08-06",
+      "estado": "finalizado",
+      "periodo_desde": "2026-04-09",
+      "periodo_hasta": "2026-07-09",
+      "contenido": "Documento ficticio de prueba, redactado manualmente.\n\nDurante el período se trabajó en comprensión de consignas, organización de materiales, lectura y solicitud de ayuda. En los encuentros iniciales Martina necesitó acompañamiento para revisar consignas completas y reunir materiales. En actividades conocidas comenzó a utilizar listas visuales y a formular preguntas concretas.\n\nLa sesión prevista para el 25/06/2026 no se realizó por ausencia. Los avances registrados corresponden a las sesiones observadas; no permiten afirmar autonomía sostenida en todos los contextos.\n\nSe propone continuar trabajando la comprensión de instrucciones nuevas y la planificación de tareas con apoyos graduados. Este contenido es ficticio y se incorpora para verificar el estado finalizado en la aplicación.",
+      "asistido_ia": false
+    },
+    {
+      "titulo": "Notas para próximo informe - DEMO",
+      "fecha": "2026-10-30",
+      "estado": "borrador",
+      "periodo_desde": "2026-08-06",
+      "periodo_hasta": "2026-10-29",
+      "contenido": "Borrador manual de prueba. Revisar progresos en el pedido de ayuda y diferenciar el cierre del objetivo de agenda en papel de un objetivo cumplido. Agregar ejemplos de actividades nuevas donde todavía necesita orientación. Falta la revisión profesional.",
+      "asistido_ia": false
+    }
+  ]
+}

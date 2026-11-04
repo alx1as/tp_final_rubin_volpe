@@ -20,6 +20,8 @@ class Settings(BaseSettings):
 
     database_url: SecretStr
     session_cookie_secure: bool = False
+    groq_api_key: SecretStr | None = None
+    groq_model: str = "openai/gpt-oss-20b"
     allowed_origins: list[str] = Field(default_factory=lambda: [
         "http://localhost:5173", "http://127.0.0.1:5173",
     ])

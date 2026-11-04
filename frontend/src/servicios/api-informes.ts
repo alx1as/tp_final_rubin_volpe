@@ -16,7 +16,7 @@ export type Informe = {
 
 export type InformeGuardar = Pick<
   Informe,
-  "titulo" | "periodo_desde" | "periodo_hasta" | "contenido"
+  "titulo" | "periodo_desde" | "periodo_hasta" | "contenido" | "asistido_ia"
 >;
 
 export function listarInformes(pacienteId: number): Promise<Informe[]> {
@@ -27,7 +27,7 @@ export function crearInforme(pacienteId: number, datos: InformeGuardar): Promise
   return solicitar(`/api/pacientes/${pacienteId}/informes`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...datos, asistido_ia: false }),
+    body: JSON.stringify(datos),
   });
 }
 
@@ -40,5 +40,18 @@ export function editarInforme(
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(cambios),
+  });
+}
+
+// Solo genera un borrador temporal: no se persiste hasta que el profesional lo revise.
+export type SolicitudInformeIA = Pick<Informe, "titulo" | "periodo_desde" | "periodo_hasta">;
+
+export function generarBorradorIA(
+  pacienteId: number, datos: SolicitudInformeIA
+): Promise<InformeGuardar> {
+  return solicitar(`/api/pacientes/${pacienteId}/informes/generar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(datos),
   });
 }

@@ -1,5 +1,6 @@
 """Borradores desde fuentes autorizadas, sin modificar ni guardar registros."""
 
+from fastapi import HTTPException
 from sqlmodel import Session, select
 
 from app.integrations.contratos import ContextoInforme, GeneradorInformes, IntegracionNoConfigurada
@@ -60,5 +61,11 @@ def generar_borrador(
     if generador is None:
         raise IntegracionNoConfigurada
     contexto = recopilar_contexto(session, paciente, datos)
+    if not contexto.sesiones:
+        raise HTTPException(
+            status_code=422,
+            detail="No hay sesiones registradas para este paciente en el período seleccionado. "
+                   "Revisá las fechas o cargá sesiones antes de generar un informe.",
+        )
     contenido = ejecutar_integracion(lambda: generador.generar(contexto))
     return BorradorGenerado(**datos.model_dump(), contenido=contenido)

@@ -98,8 +98,9 @@ def test_generation_gathers_all_sources_beyond_list_page_size(generation, auth_a
 def test_generation_empty_period_has_no_invented_source_records(generation):
     client, base, _, adapter = generation
     response = client.post(base + "/informes/generar", json=REQUEST)
-    assert response.status_code == 200
-    assert adapter.contextos[0].sesiones == () and adapter.contextos[0].objetivos == ()
+    assert response.status_code == 422
+    assert "No hay sesiones registradas" in response.json()["detail"]
+    assert adapter.contextos == []
     assert client.get(base + "/informes").json()["total"] == 0
 
 
