@@ -6,11 +6,15 @@ from fastapi import Depends, Request
 
 from app.integrations.contratos import GeneradorInformes, Transcriptor
 from app.integrations.groq_informes import GeneradorGroq
+from app.integrations.groq_transcripcion import TranscriptorGroq
 
 
-def obtener_transcriptor() -> Transcriptor | None:
-    # La integración de audio se mantiene separada (a cargo de Mavi).
-    return None
+def obtener_transcriptor(request: Request) -> Transcriptor | None:
+    configuracion = getattr(request.app.state, "settings", None)
+    clave = getattr(configuracion, "groq_api_key", None)
+    if clave is None or not clave.get_secret_value().strip():
+        return None
+    return TranscriptorGroq(api_key=clave.get_secret_value())
 
 
 def obtener_generador_informes(request: Request) -> GeneradorInformes | None:

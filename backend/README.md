@@ -194,8 +194,11 @@ como fuente. Estado y demás cambios se guardan en la misma transacción.
 
 ## Preparación de audio e IA (E6)
 
-La transcripción continúa sin proveedor configurado (se integra por separado).
-La generación de informes dispone de adaptador para **Groq**, que se activa si
+La transcripción utiliza el adaptador **Groq Whisper Large V3 Turbo** y la
+misma clave `GROQ_API_KEY` que se usa para los informes. Admite audio WebM,
+WAV, MP3, M4A, MP4, OGG, FLAC, MPEG o MPGA hasta 25 MB. Envía el archivo a
+Groq y devuelve texto editable sin persistir audio. El idioma es español.
+La generación de informes también dispone de adaptador para **Groq**, que se activa si
 `GROQ_API_KEY` está configurada en `backend/.env`. Sin esa clave, solo la ruta de
 generación responde 503: `{"detail":"Servicio externo no configurado"}`. Una falla o una respuesta
 vacía/inválida de un adaptador responde 503: `{"detail":"Servicio externo no disponible"}`.
