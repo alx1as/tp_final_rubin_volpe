@@ -63,3 +63,19 @@ export function guardarObservacion(
 export function listarEvidenciasObjetivo(pacienteId: number, objetivoId: number): Promise<EvidenciaObjetivo[]> {
   return solicitarListaCompleta(`/api/pacientes/${pacienteId}/objetivos/${objetivoId}/observaciones`);
 }
+
+/** La API pagina por sesión y devuelve cada sesión con sus observaciones. */
+export type EntradaCronologia = Sesion & { observaciones: Observacion[] };
+
+export function listarCronologia(pacienteId: number, mes: string): Promise<EntradaCronologia[]> {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(mes)) {
+    return Promise.reject(new Error("El mes seleccionado no es válido."));
+  }
+  const [anio, numeroMes] = mes.split("-").map(Number);
+  const ultimoDia = new Date(anio, numeroMes, 0).getDate();
+  const desde = `${mes}-01`;
+  const hasta = `${mes}-${String(ultimoDia).padStart(2, "0")}`;
+  return solicitarListaCompleta<EntradaCronologia>(
+    `/api/pacientes/${pacienteId}/cronologia?desde=${desde}&hasta=${hasta}`
+  );
+}

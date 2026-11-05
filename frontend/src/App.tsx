@@ -36,6 +36,9 @@ export default function App() {
   }, []);
 
   async function salir() {
+    const formularioAbierto = document.querySelector('.vista-pestana:not([hidden]) form.admision-formulario, .vista-pestana:not([hidden]) form.ficha-datos-formulario');
+    const informePendiente = document.querySelector('.vista-pestana:not([hidden]) [data-pendiente="true"]');
+    if ((formularioAbierto || informePendiente) && !window.confirm("Hay posibles cambios sin guardar. ¿Querés cerrar sesión?")) return;
     setCerrando(true);
     setErrorSalida("");
     try {

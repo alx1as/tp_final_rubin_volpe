@@ -52,10 +52,12 @@ export default function EscolaridadPaciente({ registros, onGuardar, cargando, er
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [errorFormulario, setErrorFormulario] = useState("");
+  const [detalles, setDetalles] = useState<number[]>([]);
 
   const actual = registros.find((registro) => registro.id === editando);
 
   function iniciarEdicion(id: number | "nuevo") {
+    if (editando !== null && editando !== id && !window.confirm("Hay un formulario abierto. ¿Querés descartar los cambios y abrir otro?")) return;
     setErrorFormulario("");
     setEditando(id);
   }
@@ -126,6 +128,19 @@ export default function EscolaridadPaciente({ registros, onGuardar, cargando, er
             <small>
               {fecha(registro.fecha_inicio)} — {fecha(registro.fecha_fin)}
             </small>
+            <button type="button" className="texto-accion" aria-expanded={detalles.includes(registro.id)}
+              onClick={() => setDetalles((prev) => prev.includes(registro.id) ? prev.filter((id) => id !== registro.id) : [...prev, registro.id])}>
+              {detalles.includes(registro.id) ? "Ocultar detalles" : "Ver trayectoria y apoyos"}
+            </button>
+            {detalles.includes(registro.id) && <div className="registro-detalles">
+              {registro.jornada && <p><strong>Jornada:</strong> {registro.jornada}</p>}
+              {registro.apoyos && <p><strong>Apoyos escolares:</strong> {registro.apoyos}</p>}
+              {registro.observaciones && <p><strong>Observaciones:</strong> {registro.observaciones}</p>}
+              {registro.referente_nombre && <p><strong>Referente:</strong> {registro.referente_nombre}</p>}
+              {registro.referente_rol && <p><strong>Rol:</strong> {registro.referente_rol}</p>}
+              {registro.referente_contacto && <p><strong>Contacto:</strong> {registro.referente_contacto}</p>}
+              {!registro.jornada && !registro.apoyos && !registro.observaciones && !registro.referente_nombre && !registro.referente_rol && !registro.referente_contacto && <p>Sin información complementaria registrada.</p>}
+            </div>}
           </div>
 
           <button

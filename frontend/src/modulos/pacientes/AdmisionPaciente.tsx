@@ -40,6 +40,7 @@ export default function AdmisionPaciente({
 }: Props) {
   const [editando, setEditando] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [verAntecedentes, setVerAntecedentes] = useState(false);
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -131,7 +132,19 @@ export default function AdmisionPaciente({
             <p>{admision.fecha.split("-").reverse().join("/")}</p>
           </div>
 
-          {campos.filter((campo) => admision[campo.clave]).map((campo) => (
+          <div>
+            <small>Motivo de consulta</small>
+            <p>{admision.motivo_consulta}</p>
+          </div>
+          {campos.slice(1).some((campo) => admision[campo.clave]) && (
+            <div className="admision-ver-mas">
+              <button type="button" className="texto-accion" aria-expanded={verAntecedentes}
+                onClick={() => setVerAntecedentes((actual) => !actual)}>
+                {verAntecedentes ? "Ocultar antecedentes" : "Explorar antecedentes y contexto"}
+              </button>
+            </div>
+          )}
+          {verAntecedentes && campos.slice(1).filter((campo) => admision[campo.clave]).map((campo) => (
             <div key={campo.clave}>
               <small>{campo.etiqueta}</small>
               <p>{admision[campo.clave]}</p>
