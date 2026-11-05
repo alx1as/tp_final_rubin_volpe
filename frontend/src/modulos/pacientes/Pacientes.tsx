@@ -108,6 +108,7 @@ export default function Pacientes() {
   if (seleccionado) {
     return (
       <FichaPaciente
+        key={seleccionado.id}
         paciente={seleccionado}
         onVolver={() => setSeleccionado(null)}
         onPacienteActualizado={(actualizado) => {

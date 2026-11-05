@@ -4,7 +4,6 @@ import {
   type Observacion, type ObservacionGuardar, type Sesion,
 } from "../../servicios/api-seguimiento";
 import type { Objetivo } from "./ObjetivosPaciente";
-import CronologiaPaciente from "./CronologiaPaciente";
 import GrabadoraNota from "./GrabadoraNota";
 
 type Props = {
@@ -12,6 +11,11 @@ type Props = {
   objetivos: Objetivo[];
   onCambiarObservaciones: () => void;
   onCambiarSesiones?: () => void;
+  sesionDestino?: number | null;
+  solicitudNueva?: number;
+  onSolicitudNuevaProcesada?: () => void;
+  objetivoOrigen?: number | null;
+  onVolverObjetivo?: (objetivoId: number) => void;
 };
 
 const mostrarFecha = (fecha: string) => fecha.split("-").reverse().join("/");
@@ -30,7 +34,7 @@ const etiquetas: Record<(typeof camposTexto)[number], string> = {
   resultado: "Resultado", nota_libre: "Nota libre",
 };
 
-export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObservaciones, onCambiarSesiones }: Props) {
+export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObservaciones, onCambiarSesiones, sesionDestino, solicitudNueva, onSolicitudNuevaProcesada, objetivoOrigen, onVolverObjetivo }: Props) {
   const notaSesionRef = useRef<HTMLTextAreaElement>(null);
   const notaObservacionRef = useRef<HTMLTextAreaElement>(null);
 
@@ -39,6 +43,7 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
     const campo = referencia.current;
     if (!campo) return;
     campo.value = [campo.value.trim(), texto.trim()].filter(Boolean).join("\n\n");
+    campo.dispatchEvent(new Event("input", { bubbles: true }));
     campo.focus();
   }
 
@@ -55,15 +60,14 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
   const [formObs, setFormObs] = useState<number | "nuevo" | null>(null);
   const [guardandoObs, setGuardandoObs] = useState(false);
   const [errorFormObs, setErrorFormObs] = useState("");
-  const [cronologiaVisible, setCronologiaVisible] = useState(false);
-  const [revisionCronologia, setRevisionCronologia] = useState(0);
+  const [mesFiltro, setMesFiltro] = useState("todos");
 
   useEffect(() => {
     let vigente = true;
     setCargando(true);
     setError("");
     setSesiones([]);
-    setSesionSeleccionada(null);
+    setSesionSeleccionada(sesionDestino ?? null);
     listarSesiones(pacienteId)
       .then((datos) => { if (vigente) setSesiones(ordenadas(datos)); })
       .catch((fallo) => {
@@ -88,6 +92,32 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
     return () => { vigente = false; };
   }, [pacienteId, sesionSeleccionada]);
 
+  useEffect(() => {
+    if (sesionDestino == null) return;
+    setSesionSeleccionada(sesionDestino);
+    setFormObs(null);
+    const id = window.requestAnimationFrame(() => {
+      document.getElementById(`sesion-${sesionDestino}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [sesionDestino]);
+
+  useEffect(() => {
+    if (cargando || sesionDestino == null) return;
+    const id = window.requestAnimationFrame(() => document.getElementById(`sesion-${sesionDestino}`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+    return () => window.cancelAnimationFrame(id);
+  }, [cargando, sesionDestino]);
+
+  useEffect(() => {
+    if (!solicitudNueva) return;
+    setFormSesion("nuevo");
+    setErrorSesion("");
+    onSolicitudNuevaProcesada?.();
+  }, [solicitudNueva, onSolicitudNuevaProcesada]);
+
+  const meses = [...new Set(sesiones.map((sesion) => sesion.fecha.slice(0, 7)))];
+  const sesionesVisibles = mesFiltro === "todos" ? sesiones : sesiones.filter((sesion) => sesion.fecha.startsWith(mesFiltro));
+
   async function guardarFormularioSesion(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     const datos = new FormData(evento.currentTarget);
@@ -105,7 +135,6 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
       ]));
       setFormSesion(null);
       setSesionSeleccionada(guardada.id);
-      setRevisionCronologia((n) => n + 1);
       onCambiarSesiones?.();
     } catch (fallo) {
       setErrorSesion(fallo instanceof Error ? fallo.message : "No se pudo guardar la sesión.");
@@ -140,7 +169,6 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
         ...actuales.filter((actual) => actual.id !== guardada.id), guardada,
       ].sort((a, b) => a.id - b.id));
       setFormObs(null);
-      setRevisionCronologia((n) => n + 1);
       onCambiarObservaciones();
     } catch (fallo) {
       setErrorFormObs(fallo instanceof Error ? fallo.message : "No se pudo guardar la observación.");
@@ -196,32 +224,44 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
         </form>
       )}
 
+      {meses.length > 1 && <label className="filtro-mes-sesiones">Filtrar por mes
+        <select value={mesFiltro} onChange={(e) => {
+          if (formObs !== null && !window.confirm("Hay una observación sin guardar. ¿Querés cambiar de período?")) return;
+          setMesFiltro(e.target.value);
+        }}>
+          <option value="todos">Todas las sesiones</option>
+          {meses.map((mes) => <option value={mes} key={mes}>{new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(new Date(`${mes}-01T12:00:00`))}</option>)}
+        </select>
+      </label>}
       <div className="seguimiento-lista">
-        {sesiones.map((sesion) => (
-          <div className="seguimiento-fila" key={sesion.id}>
+        {sesionesVisibles.map((sesion) => (
+          <div className="sesion-contenedor" key={sesion.id}>
+          <div className={`seguimiento-fila ${sesionSeleccionada === sesion.id ? "resaltada" : ""}`} id={`sesion-${sesion.id}`} >
             <div>
               <strong>{mostrarFecha(sesion.fecha)} · {sesion.presente ? "Presente" : "Ausente"}</strong>
               {sesion.nota_general && <p>{sesion.nota_general}</p>}
             </div>
             <div className="seguimiento-acciones">
               <button type="button" onClick={() => {
+                if (formObs !== null && !window.confirm("Hay una observación sin guardar. ¿Querés descartarla?")) return;
                 setSesionSeleccionada((id) => id === sesion.id ? null : sesion.id);
                 setFormObs(null);
               }}>
                 {sesionSeleccionada === sesion.id ? "Cerrar" : "Observaciones"}
               </button>
               <button type="button" onClick={() => {
+                if (formSesion !== null && formSesion !== sesion.id && !window.confirm("Hay una sesión sin guardar. ¿Querés descartarla?")) return;
                 setFormSesion(sesion.id); setErrorSesion("");
               }}>Editar</button>
             </div>
           </div>
-        ))}
-      </div>
-
-      {sesionSeleccionada !== null && (
-        <div className="seguimiento-subpanel">
+      {sesionSeleccionada === sesion.id && (
+        <div className="seguimiento-subpanel" id="sesion-detalle">
+          {objetivoOrigen != null && onVolverObjetivo && (
+            <button type="button" className="texto-accion" onClick={() => onVolverObjetivo(objetivoOrigen)}>← Volver al objetivo</button>
+          )}
           <div className="admision-cabecera">
-            <h3>Observaciones · {mostrarFecha(sesiones.find((sesion) => sesion.id === sesionSeleccionada)?.fecha ?? "")}</h3>
+            <h3>Observaciones · {mostrarFecha(sesion.fecha)}</h3>
             {formObs === null && (
               <button type="button" className="pacientes-boton" disabled={cargandoObs}
                 onClick={() => { setFormObs("nuevo"); setErrorFormObs(""); }}>
@@ -243,6 +283,7 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
                 <p key={campo}><b>{etiquetas[campo]}:</b> {obs[campo]}</p>
               ))}
               <button type="button" className="seguimiento-link" onClick={() => {
+                if (formObs !== null && formObs !== obs.id && !window.confirm("Hay una observación sin guardar. ¿Querés descartarla?")) return;
                 setFormObs(obs.id); setErrorFormObs("");
               }}>Editar observación</button>
             </div>
@@ -276,15 +317,11 @@ export default function SesionesPaciente({ pacienteId, objetivos, onCambiarObser
           )}
         </div>
       )}
-      <div className="seguimiento-cronologia-control">
-        <button type="button" className="seguimiento-link" onClick={() => setCronologiaVisible(!cronologiaVisible)}
-          disabled={cargando || !!error} aria-expanded={cronologiaVisible}>
-          {cronologiaVisible ? "Ocultar cronología" : "Ver cronología completa"}
-        </button>
+          </div>
+        ))}
       </div>
-      {cronologiaVisible && !cargando && !error && (
-        <CronologiaPaciente key={revisionCronologia} pacienteId={pacienteId} sesiones={sesiones} objetivos={objetivos} />
-      )}
+
+
     </section>
   );
 }

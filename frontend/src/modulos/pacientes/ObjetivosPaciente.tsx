@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import EvidenciasObjetivo from "./EvidenciasObjetivo";
 
 export type EstadoObjetivo = "activo" | "cumplido" | "cerrado";
@@ -21,6 +21,8 @@ type Props = {
   error: string;
   pacienteId: number;
   revisionEvidencias: number;
+  onVerSesion?: (sesionId: number, objetivoId: number) => void;
+  objetivoDestino?: number | null;
 };
 
 const mostrarFecha = (fecha: string) =>
@@ -32,15 +34,25 @@ const etiquetasEstado: Record<EstadoObjetivo, string> = {
   cerrado: "Cerrado sin cumplimiento",
 };
 
-export default function ObjetivosPaciente({ registros, onGuardar, cargando, error, pacienteId, revisionEvidencias }: Props) {
+export default function ObjetivosPaciente({ registros, onGuardar, cargando, error, pacienteId, revisionEvidencias, onVerSesion, objetivoDestino }: Props) {
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
   const [estadoFormulario, setEstadoFormulario] = useState<EstadoObjetivo>("activo");
   const [errorFormulario, setErrorFormulario] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [filtro, setFiltro] = useState<"todos" | EstadoObjetivo>("todos");
+  const [detalles, setDetalles] = useState<number[]>(objetivoDestino != null ? [objetivoDestino] : []);
+  useEffect(() => {
+    if (objetivoDestino === null || objetivoDestino === undefined) return;
+    // Al volver desde una sesión se recupera el objetivo y sus registros vinculados.
+    const id = window.requestAnimationFrame(() => document.getElementById(`objetivo-${objetivoDestino}`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+    return () => window.cancelAnimationFrame(id);
+  }, [objetivoDestino]);
 
+  const registrosVisibles = filtro === "todos" ? registros : registros.filter((registro) => registro.estado === filtro);
   const objetivoActual = registros.find((objetivo) => objetivo.id === editando);
 
   function abrirFormulario(id: number | "nuevo") {
+    if (editando !== null && editando !== id && !window.confirm("Hay datos del objetivo sin guardar. ¿Querés cambiar de formulario?")) return;
     const registro = registros.find((objetivo) => objetivo.id === id);
     setEstadoFormulario(registro?.estado ?? "activo");
     setErrorFormulario("");
@@ -118,18 +130,31 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
         </p>
       )}
 
-      {registros.map((objetivo) => (
-        <div className="objetivo-registro" key={objetivo.id}>
+      <div className="filtros-objetivos" role="group" aria-label="Filtrar objetivos">
+        {(["todos", "activo", "cumplido", "cerrado"] as const).map((estado) => (
+          <button type="button" key={estado} className={`filtro-pildora ${filtro === estado ? "seleccionado" : ""}`}
+            aria-pressed={filtro === estado} onClick={() => setFiltro(estado)}>
+            {estado === "todos" ? "Todos" : etiquetasEstado[estado]}
+          </button>
+        ))}
+      </div>
+      {!cargando && registros.length > 0 && registrosVisibles.length === 0 && <p className="texto-atenuado">No hay objetivos con este estado.</p>}
+      {registrosVisibles.map((objetivo) => (
+        <div className={`objetivo-registro ${objetivoDestino === objetivo.id ? "resaltada" : ""}`} id={`objetivo-${objetivo.id}`} key={objetivo.id}>
           <div>
             <strong>{objetivo.descripcion}</strong>
             <p>
               {etiquetasEstado[objetivo.estado]} · Inicio: {mostrarFecha(objetivo.fecha_inicio)}
               {objetivo.fecha_cierre && ` · Cierre: ${mostrarFecha(objetivo.fecha_cierre)}`}
             </p>
-            {objetivo.observaciones_generales && (
-              <p>Observaciones: {objetivo.observaciones_generales}</p>
-            )}
-            <EvidenciasObjetivo pacienteId={pacienteId} objetivoId={objetivo.id} revision={revisionEvidencias} />
+            <button type="button" className="texto-accion" aria-expanded={detalles.includes(objetivo.id)}
+              onClick={() => setDetalles((prev) => prev.includes(objetivo.id) ? prev.filter((id) => id !== objetivo.id) : [...prev, objetivo.id])}>
+              {detalles.includes(objetivo.id) ? "Ocultar registros" : "Consultar observaciones y evidencias"}
+            </button>
+            {detalles.includes(objetivo.id) && <div className="registro-detalles">
+              {objetivo.observaciones_generales && <p><strong>Observaciones:</strong> {objetivo.observaciones_generales}</p>}
+              <EvidenciasObjetivo pacienteId={pacienteId} objetivoId={objetivo.id} revision={revisionEvidencias} onVerSesion={onVerSesion} inicialmenteAbierto={objetivoDestino === objetivo.id} />
+            </div>}
           </div>
 
           <button type="button" onClick={() => abrirFormulario(objetivo.id)} disabled={cargando || guardando}>

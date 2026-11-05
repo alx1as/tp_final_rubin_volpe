@@ -7,10 +7,12 @@ type Props = {
   pacienteId: number;
   objetivoId: number;
   revision: number;
+  onVerSesion?: (sesionId: number, objetivoId: number) => void;
+  inicialmenteAbierto?: boolean;
 };
 
-export default function EvidenciasObjetivo({ pacienteId, objetivoId, revision }: Props) {
-  const [abierto, setAbierto] = useState(false);
+export default function EvidenciasObjetivo({ pacienteId, objetivoId, revision, onVerSesion, inicialmenteAbierto = false }: Props) {
+  const [abierto, setAbierto] = useState(inicialmenteAbierto);
   const [evidencias, setEvidencias] = useState<EvidenciaObjetivo[]>([]);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +52,7 @@ export default function EvidenciasObjetivo({ pacienteId, objetivoId, revision }:
               {evidencia.intervencion && <p><b>Intervención:</b> {evidencia.intervencion}</p>}
               {evidencia.resultado && <p><b>Resultado:</b> {evidencia.resultado}</p>}
               {evidencia.nota_libre && <p><b>Nota:</b> {evidencia.nota_libre}</p>}
+              {onVerSesion && <button type="button" className="texto-accion" onClick={() => onVerSesion(evidencia.sesion_id, objetivoId)}>Abrir sesión original →</button>}
             </div>
           ))}
         </div>

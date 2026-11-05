@@ -43,6 +43,7 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar, carg
   const actual = registros.find((registro) => registro.id === editando);
 
   function abrirFormulario(id: number | "nuevo") {
+    if (editando !== null && editando !== id && !window.confirm("Hay un formulario abierto. ¿Querés descartar los cambios y abrir otro?")) return;
     setErrorFormulario("");
     setEditando(id);
   }

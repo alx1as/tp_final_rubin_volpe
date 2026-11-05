@@ -52,6 +52,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
   const [creando, setCreando] = useState(false);
   const [formulario, setFormulario] = useState<InformeGuardar>(formularioVacio);
   const [modoContenido, setModoContenido] = useState<"edicion" | "vista_previa">("edicion");
+  const [filtro, setFiltro] = useState<"todos" | EstadoInforme>("todos");
 
   useEffect(() => {
     let vigente = true;
@@ -83,6 +84,8 @@ export default function InformesPaciente({ pacienteId }: Props) {
     ? formulario.titulo.trim() !== "" || formulario.contenido.trim() !== "" ||
       formulario.periodo_desde !== formulario.periodo_hasta
     : actual !== null && JSON.stringify(formulario) !== JSON.stringify(camposInforme(actual));
+
+  const informesFiltrados = filtro === "todos" ? informes : informes.filter((informe) => informe.estado === filtro);
 
   function confirmarSalida(): boolean {
     return !cambioPendiente || window.confirm("Hay cambios sin guardar. ¿Querés descartarlos?");
@@ -198,7 +201,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
   }
 
   return (
-    <section className="informes-layout" aria-label="Gestión de informes">
+    <section className="informes-layout" aria-label="Gestión de informes" data-pendiente={cambioPendiente ? "true" : "false"}>
       <div className="pacientes-panel informes-listado">
         <div className="informes-listado-cabecera">
           <div>
@@ -209,10 +212,19 @@ export default function InformesPaciente({ pacienteId }: Props) {
             <FilePlus2 size={16} aria-hidden="true" /> Nuevo
           </button>
         </div>
+        <div className="filtros-informes" role="group" aria-label="Filtrar informes">
+          {(["todos", "borrador", "finalizado"] as const).map((estado) => (
+            <button type="button" key={estado} className={`filtro-pildora ${filtro === estado ? "seleccionado" : ""}`}
+              aria-pressed={filtro === estado} onClick={() => setFiltro(estado)}>
+              {estado === "todos" ? "Todos" : estado === "borrador" ? "Borradores" : "Finalizados"}
+            </button>
+          ))}
+        </div>
         {cargando ? <p className="informes-aviso">Cargando informes...</p> :
           informes.length === 0 ? <p className="informes-aviso">Todavía no hay informes guardados.</p> :
+          informesFiltrados.length === 0 ? <p className="informes-aviso">No hay informes con este estado.</p> :
           <div className="informes-items">
-            {informes.map((informe) => (
+            {informesFiltrados.map((informe) => (
               <button key={informe.id} type="button"
                 className={`informes-item ${actual?.id === informe.id && !creando ? "activo" : ""}`}
                 onClick={() => seleccionarInforme(informe)} disabled={generando}>
