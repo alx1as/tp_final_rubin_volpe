@@ -1,7 +1,7 @@
 .pantalla-acceso,.pantalla-cargando{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:36px 24px;background:radial-gradient(ellipse at 12% 8%,var(--color-primario-suave) 0,transparent 45%),radial-gradient(ellipse at 92% 94%,var(--color-amarillo-suave) 0,transparent 42%),var(--color-fondo)}
 .tarjeta-acceso{position:relative;width:min(100%,460px);padding:34px 40px 30px;border:1px solid var(--color-borde);border-top:4px solid var(--color-crema);border-radius:22px;background:var(--color-superficie);box-shadow:0 18px 60px rgba(84,94,117,.075)}
 .acceso-marca{display:flex;justify-content:center;padding-bottom:26px;margin-bottom:25px;border-bottom:1px solid var(--color-borde)}
-.acceso-subtitulo{color:var(--color-primario-oscuro);font-size:10px;font-weight:800;letter-spacing:.12em}
+.acceso-subtitulo{color:var(--color-secundario);font-size:10px;font-weight:800;letter-spacing:.12em}
 .tarjeta-acceso h1{font-size:29px;line-height:1.2;margin-top:10px;letter-spacing:-.04em}
 .acceso-descripcion{color:var(--color-texto-secundario);font-size:14px;margin:10px 0 28px}
 .formulario-acceso{display:grid;gap:18px}

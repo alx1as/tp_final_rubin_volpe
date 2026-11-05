@@ -310,7 +310,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
                 )}
               </div>
             </fieldset>
-            {formulario.asistido_ia && <p className="informes-ayuda">Este borrador fue asistido por IA. Revisá su contenido antes de finalizarlo.</p>}
+            {formulario.asistido_ia && <p className="informes-ayuda informes-revision">Este borrador fue asistido por IA. Revisá su contenido antes de finalizarlo.</p>}
             {error && <p className="informes-error" role="alert">{error}</p>}
             {mensaje && <p className="informes-exito" role="status">{mensaje}</p>}
             <div className="informes-acciones">

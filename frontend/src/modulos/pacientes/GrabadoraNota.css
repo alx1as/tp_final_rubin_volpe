@@ -1,9 +1,9 @@
 .grabadora-nota {border:1px solid var(--color-borde);border-radius:12px;padding:17px 18px;background:var(--color-fondo);display:grid;gap:10px;min-width:0}
-.grabadora-nota-titulo {font-size:12px;font-weight:800;color:var(--color-primario-oscuro)}
+.grabadora-nota-titulo {font-size:12px;font-weight:800;color:var(--color-secundario)}
 .grabadora-nota-ayuda {font-size:11px;color:var(--color-secundario);line-height:1.55}
 .grabadora-nota-acciones {display:flex;flex-wrap:wrap;gap:9px;align-items:center}
-.grabadora-nota-acciones button,.grabadora-nota-revision button {min-height:36px;padding:8px 12px;border:1px solid var(--color-borde);border-radius:9px;background:var(--color-primario-suave);color:var(--color-primario-oscuro);font-size:12px;font-weight:700}
-.grabadora-nota-acciones button:hover,.grabadora-nota-revision button:hover {background:var(--color-primario-suave)}
+.grabadora-nota-acciones button,.grabadora-nota-revision button {min-height:36px;padding:8px 12px;border:1px solid var(--color-borde);border-radius:9px;background:var(--color-superficie);color:var(--color-secundario);font-size:12px;font-weight:700;border-color:var(--color-borde-secundario)}
+.grabadora-nota-acciones button:hover,.grabadora-nota-revision button:hover {background:var(--color-secundario-suave)}
 .grabadora-nota-acciones .grabadora-nota-detenida {background:var(--color-coral-suave);border-color:var(--color-borde);color:var(--color-coral)}
 .grabadora-nota-indicador {font-size:12px;color:var(--color-coral);font-weight:700}
 .grabadora-nota audio {width:100%;max-width:420px;min-width:0;height:39px}

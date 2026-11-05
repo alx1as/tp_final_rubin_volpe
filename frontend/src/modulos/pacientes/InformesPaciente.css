@@ -13,7 +13,7 @@
 .informes-item-periodo{font-size:11px;color:var(--color-secundario)}
 .informes-item-pie{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .informes-estado,.informes-marca-ia{display:inline-flex;align-items:center;border-radius:99px;padding:5px 9px;font-size:10px;font-weight:800}
-.informes-estado.borrador{background:var(--color-amarillo-suave);color:var(--color-amarillo)}
+.informes-estado.borrador{background:var(--color-crema);color:var(--color-amarillo)}
 .informes-estado.finalizado{background:var(--color-primario-suave);color:var(--color-primario-oscuro)}
 .informes-marca-ia{background:var(--color-secundario-suave);color:var(--color-secundario)}
 .informes-sin-seleccion{display:flex;min-height:280px;align-items:center;justify-content:center;text-align:center;flex-direction:column;gap:13px;color:var(--color-secundario);padding:20px}
@@ -29,9 +29,10 @@
 .informes-formulario input:focus,.informes-formulario textarea:focus{border-color:var(--color-borde-activo);box-shadow:0 0 0 3px var(--color-foco)}
 .informes-periodo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
 .informes-acciones{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
-.informes-boton-secundario{min-height:40px;display:inline-flex;align-items:center;gap:8px;padding:9px 13px;background:#fff;border:1px solid var(--color-borde);color:var(--color-secundario);border-radius:10px;font-weight:700;font-size:12px}
-.informes-boton-secundario:hover:not(:disabled){background:var(--color-fondo)}
+.informes-boton-secundario{min-height:40px;display:inline-flex;align-items:center;gap:8px;padding:9px 13px;background:#fff;border:1px solid var(--color-borde);color:var(--color-secundario);border-radius:10px;font-weight:700;font-size:12px;border-color:var(--color-borde-secundario)}
+.informes-boton-secundario:hover:not(:disabled){background:var(--color-secundario-suave)}
 .informes-ayuda{font-size:11px;color:var(--color-secundario);line-height:1.7;margin-top:13px}
+.informes-revision{padding:12px 14px;border:1px solid var(--color-crema);border-left:3px solid var(--color-crema);border-radius:9px;background:var(--color-amarillo-suave);color:var(--color-amarillo);font-size:13px}
 .informes-error,.informes-exito{font-size:12px;line-height:1.5;margin-top:14px;padding:10px 12px;border-radius:8px}
 .informes-error{color:var(--color-coral);background:var(--color-coral-suave)}
 .informes-exito{color:var(--color-primario-oscuro);background:var(--color-primario-suave)}
