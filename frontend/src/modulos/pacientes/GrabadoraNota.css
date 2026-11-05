@@ -11,3 +11,15 @@
 .grabadora-nota-revision label {display:grid;gap:7px;font-size:12px;font-weight:700;color:var(--color-texto)}
 .grabadora-nota-revision textarea {width:100%;min-width:0;min-height:90px;padding:10px 12px;border:1px solid var(--color-borde);border-radius:10px;resize:vertical;color:var(--color-texto);font-size:16px;line-height:1.6}
 .grabadora-nota-revision button {justify-self:start}
+
+.grabadora-nota-destinos{display:flex;flex-wrap:wrap;gap:9px}
+.grabadora-nota-destinos .grabadora-nota-ia{background:var(--color-secundario-suave);color:var(--color-texto)}
+.grabadora-nota-destinos button:disabled{opacity:.65;cursor:wait}
+.seguimiento-borrador-ia{display:grid;gap:12px;margin-top:12px;padding:16px;border:1px solid var(--color-borde);border-radius:12px;background:var(--color-fondo)}
+.seguimiento-borrador-ia h4{margin:0;color:var(--color-texto);font-size:14px}
+.seguimiento-borrador-ia p{margin:0;color:var(--color-secundario);font-size:12px;line-height:1.6}
+.seguimiento-borrador-ia label{display:grid;gap:7px;font-weight:700;font-size:12px;color:var(--color-texto)}
+.seguimiento-borrador-ia textarea,.seguimiento-borrador-ia select{width:100%;min-width:0;border:1px solid var(--color-borde);background:var(--color-superficie);border-radius:9px;padding:10px 12px;color:var(--color-texto);font:inherit;font-size:14px;line-height:1.55}
+.seguimiento-borrador-ia textarea{resize:vertical}
+.seguimiento-borrador-ia .seguimiento-descartar-ia{justify-self:start;padding:9px 13px;border:1px solid var(--color-borde);border-radius:9px;background:var(--color-superficie);color:var(--color-secundario);font-weight:700;cursor:pointer}
+@media(max-width:600px){.grabadora-nota-destinos button{flex:1}}

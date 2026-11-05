@@ -23,6 +23,20 @@ export type Observacion = {
 export type ObservacionGuardar = Omit<Observacion, "id" | "sesion_id">;
 export type EvidenciaObjetivo = Observacion & { fecha_sesion: string };
 
+// Solo propone una distribución; la observación se guarda con guardarObservacion.
+export type SugerenciaObservacion = Pick<ObservacionGuardar,
+  "contexto" | "conducta_observable" | "intervencion" | "resultado" | "nota_libre">;
+
+export function organizarNotaConIA(
+  pacienteId: number, texto: string
+): Promise<SugerenciaObservacion> {
+  return solicitar(`/api/pacientes/${pacienteId}/observaciones/organizar`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texto }),
+  });
+}
+
 function cuerpoJson(datos: unknown): RequestInit {
   return {
     headers: { "Content-Type": "application/json" },
@@ -78,4 +92,38 @@ export function listarCronologia(pacienteId: number, mes: string): Promise<Entra
   return solicitarListaCompleta<EntradaCronologia>(
     `/api/pacientes/${pacienteId}/cronologia?desde=${desde}&hasta=${hasta}`
   );
+}
+
+/** Registro compuesto: una sola transacción en el backend. */
+export type ObservacionEnRegistro = ObservacionGuardar & { id?: number };
+export type RegistroSesionGuardar = SesionGuardar & {
+  observaciones: ObservacionEnRegistro[];
+  observaciones_eliminar: number[];
+};
+export type RegistroSesionRespuesta = {
+  sesion: Sesion;
+  observaciones: Observacion[];
+};
+
+export function guardarRegistroSesion(
+  pacienteId: number, datos: RegistroSesionGuardar, sesionId?: number
+): Promise<RegistroSesionRespuesta> {
+  const ruta = `/api/pacientes/${pacienteId}/sesiones` +
+    (sesionId === undefined ? "/completa" : `/${sesionId}/completa`);
+  return solicitar(ruta, {
+    method: sesionId === undefined ? "POST" : "PATCH",
+    ...cuerpoJson(datos),
+  });
+}
+
+export type RegistroAsistido = {
+  nota_general: string | null;
+  observaciones: ObservacionGuardar[];
+};
+
+export function organizarRegistroConIA(pacienteId: number, texto: string): Promise<RegistroAsistido> {
+  return solicitar(`/api/pacientes/${pacienteId}/observaciones/organizar-registro`, {
+    method: "POST",
+    ...cuerpoJson({ texto }),
+  });
 }

@@ -18,6 +18,7 @@ from app.api.health import router as health_router
 from app.api.informes import router as informes_router
 from app.api.objetivos import router as objetivos_router
 from app.api.observaciones import router as observaciones_router
+from app.api.organizacion import router as organizacion_router
 from app.api.pacientes import router as pacientes_router
 from app.api.profesionales_tratantes import router as profesionales_tratantes_router
 from app.api.sesiones import router as sesiones_router
@@ -55,6 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.include_router(cronologia_router, prefix="/api")
     application.include_router(informes_router, prefix="/api")
     application.include_router(observaciones_router, prefix="/api")
+    application.include_router(organizacion_router, prefix="/api")
     application.include_router(transcripciones_router, prefix="/api")
 
     @application.exception_handler(IntegracionNoConfigurada)

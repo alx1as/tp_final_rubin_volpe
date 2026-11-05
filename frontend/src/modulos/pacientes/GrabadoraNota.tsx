@@ -3,15 +3,22 @@ import { ErrorAPI } from "../../servicios/api";
 import { transcribirAudio } from "../../servicios/api-transcripciones";
 import "./GrabadoraNota.css";
 
-type Props = { onConfirmarTexto: (texto: string) => void };
+type Props = {
+  onConfirmarTexto: (texto: string) => void;
+  onOrganizarTexto?: (texto: string) => Promise<boolean | void> | boolean | void;
+  etiquetaConfirmar?: string;
+};
 type Estado = "sin-audio" | "grabando" | "procesando" | "lista";
 
-export default function GrabadoraNota({ onConfirmarTexto }: Props) {
+export default function GrabadoraNota({
+  onConfirmarTexto, onOrganizarTexto, etiquetaConfirmar = "Incorporar texto a la nota",
+}: Props) {
   const [estado, setEstado] = useState<Estado>("sin-audio");
   const [urlAudio, setUrlAudio] = useState<string | null>(null);
   const [audio, setAudio] = useState<Blob | null>(null);
   const [texto, setTexto] = useState<string | null>(null);
   const [transcribiendo, setTranscribiendo] = useState(false);
+  const [organizando, setOrganizando] = useState(false);
   const [error, setError] = useState("");
 
   const grabadoraRef = useRef<MediaRecorder | null>(null);
@@ -146,9 +153,25 @@ export default function GrabadoraNota({ onConfirmarTexto }: Props) {
   }
 
   function confirmar() {
-    if (!texto?.trim()) return;
+    if (!texto?.trim() || organizando) return;
     onConfirmarTexto(texto.trim());
     descartar();
+  }
+
+  async function organizar() {
+    if (!texto?.trim() || !onOrganizarTexto || organizando) return;
+    setError("");
+    setOrganizando(true);
+    try {
+      const resultado = await onOrganizarTexto(texto.trim());
+      // Conservar la transcripción si la persona cancela el reemplazo.
+      if (resultado !== false && vigenteRef.current) descartar();
+    } catch (fallo) {
+      if (vigenteRef.current) setError(fallo instanceof Error ? fallo.message
+        : "No se pudo organizar el texto. La transcripción sigue disponible.");
+    } finally {
+      if (vigenteRef.current) setOrganizando(false);
+    }
   }
 
   return (
@@ -165,10 +188,10 @@ export default function GrabadoraNota({ onConfirmarTexto }: Props) {
         {estado === "procesando" && <span>Preparando audio...</span>}
         {estado === "lista" && (
           <>
-            <button type="button" onClick={solicitarTranscripcion} disabled={transcribiendo}>
+            <button type="button" onClick={solicitarTranscripcion} disabled={transcribiendo || organizando}>
               {transcribiendo ? "Transcribiendo..." : "Transcribir"}
             </button>
-            <button type="button" onClick={descartar}>Descartar audio</button>
+            <button type="button" onClick={descartar} disabled={organizando}>Descartar audio</button>
           </>
         )}
       </div>
@@ -183,7 +206,17 @@ export default function GrabadoraNota({ onConfirmarTexto }: Props) {
           <label>Revisar y corregir transcripción
             <textarea rows={4} value={texto} onChange={(evento) => setTexto(evento.target.value)} />
           </label>
-          <button type="button" onClick={confirmar} disabled={!texto.trim()}>Incorporar texto a la nota</button>
+          <div className="grabadora-nota-destinos">
+            <button type="button" onClick={confirmar} disabled={!texto.trim() || organizando}>
+              {etiquetaConfirmar}
+            </button>
+            {onOrganizarTexto && (
+              <button type="button" className="grabadora-nota-ia"
+                onClick={() => void organizar()} disabled={!texto.trim() || organizando}>
+                {organizando ? "Organizando con IA..." : "Organizar con IA"}
+              </button>
+            )}
+          </div>
         </div>
       )}
       {error && <p role="alert">{error}</p>}
