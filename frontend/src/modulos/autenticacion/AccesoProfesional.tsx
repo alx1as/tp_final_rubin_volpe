@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import MarcaTrama from "../../components/MarcaTrama";
 import {
   iniciarSesion,
   registrarProfesional,
@@ -46,7 +47,8 @@ export default function AccesoProfesional({ onIngresar }: Props) {
   return (
     <main className="pantalla-acceso">
       <section className="tarjeta-acceso">
-        <p className="acceso-subtitulo">SEGUIMIENTO PSICOPEDAGÓGICO</p>
+        <div className="acceso-marca"><MarcaTrama /></div>
+        <p className="acceso-subtitulo">ESPACIO PROFESIONAL</p>
         <h1>{modo === "login" ? "Iniciar sesión" : "Crear cuenta profesional"}</h1>
         <p className="acceso-descripcion">Acceso exclusivo para profesionales.</p>
         <form onSubmit={enviar} className="formulario-acceso">

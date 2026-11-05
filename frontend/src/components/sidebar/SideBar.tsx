@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { BookOpenText, PanelLeftClose, PanelLeftOpen, UsersRound } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, UsersRound } from "lucide-react";
+import MarcaTrama from "../MarcaTrama";
 import "./sideBar.css";
 
 export default function SideBar() {
@@ -7,8 +8,7 @@ export default function SideBar() {
   return (
     <aside className={`barra-lateral ${contraida ? "contraida" : ""}`} aria-label="Navegación principal">
       <div className="sidebar-top">
-        <div className="marca-icono" aria-hidden="true"><BookOpenText size={21} strokeWidth={1.8} /></div>
-        {!contraida && <div className="marca-textos"><strong>Seguimiento</strong><span>Espacio profesional</span></div>}
+        <MarcaTrama compacta={contraida} lateral />
         <button type="button" className="boton-menu" onClick={() => setContraida(!contraida)}
           aria-label={contraida ? "Expandir menú" : "Contraer menú"} title={contraida ? "Expandir menú" : "Contraer menú"}>
           {contraida ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />}

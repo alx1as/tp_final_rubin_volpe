@@ -1,0 +1,13 @@
+.marca-trama{display:flex;flex-direction:column;align-items:center;gap:7px;width:210px;max-width:100%;color:var(--color-secundario)}
+.marca-trama-simbolo{display:block;object-fit:contain;width:140px;max-width:100%;height:auto}
+.marca-trama-identidad{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center}
+.marca-trama-nombre{font:800 42px/1.05 var(--fuente-titulos);letter-spacing:.035em}
+.marca-trama-descripcion{font-size:9px;line-height:1.65;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-primario-oscuro)}
+.marca-trama-lateral{flex-direction:row;width:auto;gap:9px}
+.marca-trama-lateral .marca-trama-simbolo{width:48px}
+.marca-trama-lateral .marca-trama-identidad{align-items:flex-start;text-align:left;gap:3px}
+.marca-trama-lateral .marca-trama-nombre{font-size:24px;letter-spacing:.025em}
+.marca-trama-lateral .marca-trama-descripcion{font-size:7px;letter-spacing:.035em;line-height:1.45}
+.marca-trama-compacta{width:42px;gap:0}
+.marca-trama-compacta .marca-trama-simbolo{width:42px}
+@media(max-width:800px){.marca-trama-lateral .marca-trama-simbolo{width:45px}.marca-trama-lateral .marca-trama-nombre{font-size:22px}}
