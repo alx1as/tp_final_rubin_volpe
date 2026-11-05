@@ -17,7 +17,7 @@ https://github.com/alx1as/tp_final_rubin_volpe
 
 ## 1. Nombre provisorio
 
-Nombre de la aplicación a definir
+TRAMA - Sistema de seguimiento psicopedagógico
 
 ## 2. Problemática y contexto
 
