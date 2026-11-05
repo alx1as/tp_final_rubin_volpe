@@ -1,0 +1,35 @@
+.sesiones-unificadas .admision-cabecera{gap:16px;flex-wrap:wrap}
+.registro-unico{margin:18px 0 24px;display:grid;gap:18px;padding:22px;border:1px solid var(--color-borde);border-radius:16px;background:var(--color-superficie);box-shadow:0 8px 28px rgba(22,50,53,.045)}
+.registro-unico-encabezado,.registro-unico-seccion-cabecera,.registro-unico-observacion-titulo{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.registro-unico-encabezado h3{margin:5px 0 0}
+.registro-unico-cerrar,.registro-unico-observacion-titulo button,.registro-unico-agregar{border:1px solid var(--color-borde-secundario);border-radius:10px;background:var(--color-superficie);color:var(--color-secundario);padding:9px 12px;font-size:12px;font-weight:750;cursor:pointer}
+.registro-unico-cerrar:hover,.registro-unico-agregar:hover{background:var(--color-secundario-suave)}
+.registro-unico-campos{border:0;min-width:0;margin:0;padding:0;display:grid;gap:16px}
+.registro-unico-campos:disabled{opacity:.7}
+.registro-unico-fila{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.registro-unico-opcional{font-weight:400;color:var(--color-secundario)}
+.registro-unico-audio{display:grid;gap:8px}
+.registro-unico-audio>p,.registro-unico-seccion-cabecera p,.registro-unico-ayuda{color:var(--color-secundario);line-height:1.55;font-size:12px;margin:0}
+.registro-unico-seccion-cabecera{border-top:1px solid var(--color-borde);padding-top:21px;align-items:center}
+.registro-unico-seccion-cabecera h4{margin:0 0 6px;font-size:16px;color:var(--color-texto)}
+.registro-unico-contador{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--color-secundario-suave);color:var(--color-secundario);vertical-align:middle}
+.registro-unico-vacio{font-size:13px;padding:14px 16px;border:1px dashed var(--color-borde);border-radius:12px;color:var(--color-secundario);background:var(--color-fondo);margin:0}
+.registro-unico-observacion{padding:18px;border:1px solid var(--color-borde);border-radius:14px;background:var(--color-fondo);display:grid;gap:15px}
+.registro-unico-observacion-titulo{align-items:center}
+.registro-unico-observacion-titulo>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.registro-unico-observacion-titulo strong{font-size:14px}
+.registro-unico-observacion-titulo button{color:var(--color-coral);border-color:var(--color-borde)}
+.registro-unico-observacion-titulo button:hover{background:var(--color-coral-suave)}
+.registro-unico-ia{display:inline-block;padding:4px 8px;border-radius:99px;color:var(--color-secundario);background:var(--color-secundario-suave);font-size:11px;font-weight:650}
+.registro-unico-observacion-campos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.registro-unico-observacion-campos>label:last-child{grid-column:1/-1}
+.registro-unico-transcripcion{background:var(--color-fondo);border:1px solid var(--color-borde);border-radius:10px;padding:12px 14px;font-size:13px}
+.registro-unico-transcripcion summary{cursor:pointer;font-weight:700;color:var(--color-secundario)}
+.registro-unico-transcripcion p{line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.registro-unico-transcripcion button{padding:9px 11px;border:1px solid var(--color-borde);background:var(--color-superficie);border-radius:8px;color:var(--color-secundario);font-weight:650;cursor:pointer}
+.registro-unico-aviso,.registro-unico-error{padding:11px 13px;border-radius:10px;font-size:13px;line-height:1.5;margin:0}
+.registro-unico-aviso{color:var(--color-secundario);background:var(--color-secundario-suave)}
+.registro-unico-error{color:#8c2929;background:#fff0ef}
+.registro-unico-acciones{display:flex;gap:12px;flex-wrap:wrap}
+.registro-unico-acciones button{min-height:40px}
+@media(max-width:720px){.registro-unico{padding:16px}.registro-unico-observacion-campos,.registro-unico-fila{grid-template-columns:1fr}.registro-unico-seccion-cabecera{align-items:stretch}.registro-unico-seccion-cabecera button{width:100%}}

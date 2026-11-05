@@ -1,0 +1,17 @@
+.organizador-observacion{padding:16px;border:1px solid #d6dee5;border-radius:14px;background:var(--color-superficie, #fbfcfe);display:grid;gap:12px;margin-top:12px}
+.organizador-observacion-titulo strong{font-size:14px;color:var(--color-texto,#2f3542)}
+.organizador-observacion-titulo p,.organizador-observacion-propuesta p,.organizador-observacion-aviso{font-size:12px;color:var(--color-texto-secundario,#657280);line-height:1.6;margin:5px 0 0}
+.organizador-observacion-boton{justify-self:start;border:1px solid #90aaa9;border-radius:10px;padding:10px 14px;background:#e6f3f1;color:#254d4d;font-weight:700}
+.organizador-observacion-boton:hover:not(:disabled){background:#d7eae7}
+.organizador-observacion-propuesta{border-top:1px solid #dce5e7;padding-top:14px;display:grid;gap:11px}
+.organizador-observacion-propuesta h4{margin:0;color:var(--color-texto,#2f3542);font-size:14px}
+.organizador-observacion-propuesta label:not(.organizador-observacion-check){display:grid;gap:5px;font-size:12px;font-weight:700}
+.organizador-observacion-propuesta textarea{width:100%;min-height:62px;padding:10px;border:1px solid #cbd7dc;border-radius:9px;color:var(--color-texto,#2f3542);background:#fff;font:inherit;resize:vertical}
+.organizador-observacion-check{display:flex;align-items:center;gap:9px;font-size:12px;line-height:1.5}
+.organizador-observacion-check input{accent-color:#387b7b}
+.organizador-observacion-acciones{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.organizador-observacion-acciones button{padding:9px 12px;border-radius:10px}
+.organizador-observacion-error,.organizador-observacion-exito{font-size:12px;margin:0;padding:8px 10px;border-radius:8px}
+.organizador-observacion-error{background:#fff2f0;color:#9a332a}
+.organizador-observacion-exito{background:#eaf6ed;color:#216b4f}
+@media(max-width:600px){.organizador-observacion-boton{width:100%}.organizador-observacion-acciones button{flex:1}}
