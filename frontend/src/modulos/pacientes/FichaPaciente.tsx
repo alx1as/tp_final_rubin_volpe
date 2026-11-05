@@ -404,7 +404,7 @@ export default function FichaPaciente({
                 <button className="texto-accion" type="button" onClick={() => abrirSeguimiento("objetivos")}>Consultar objetivos y evidencias <ArrowRight size={16}/></button>
               </section>
               <section className="pacientes-panel resumen-panel">
-                <div className="resumen-panel-cabecera"><div className="titulo-icono"><ClipboardList size={18}/><h3>Contexto del caso</h3></div></div>
+                <div className="resumen-panel-cabecera"><div className="titulo-icono titulo-icono-contexto"><ClipboardList size={18}/><h3>Contexto del caso</h3></div></div>
                 <span className="resumen-label">Motivo de consulta</span>
                 <p className="nota-resumen">{cargandoAdmision ? "Cargando..." : errorAdmision || admision?.motivo_consulta || "Aún no registrado."}</p>
                 <span className="resumen-label">Escolaridad actual</span>
@@ -427,13 +427,13 @@ export default function FichaPaciente({
             {detalleInformacion === null ? (
               <div className="historia-categorias">
                 {categorias.map(({ id, titulo, descripcion, contenido, icono: Icono }) => <button type="button" className="historia-categoria" key={id} onClick={() => cambiarDetalle(id)}>
-                  <span className="historia-icono"><Icono size={22}/></span><span className="historia-categoria-textos"><strong>{titulo}</strong><small>{descripcion}</small><span className="historia-resumen">{contenido}</span></span><ChevronRight size={20} className="historia-flecha"/>
+                  <span className={`historia-icono historia-icono-${id}`}><Icono size={22}/></span><span className="historia-categoria-textos"><strong>{titulo}</strong><small>{descripcion}</small><span className="historia-resumen">{contenido}</span></span><ChevronRight size={20} className="historia-flecha"/>
                 </button>)}
               </div>
             ) : (
               <div className="historia-detalle">
                 <button type="button" className="texto-accion historia-volver" onClick={() => cambiarDetalle(null)}><ArrowLeft size={17}/> Todas las categorías</button>
-                <div className="historia-detalle-encabezado"><span className="historia-icono"><MapPinned size={20}/></span>
+                <div className="historia-detalle-encabezado"><span className={`historia-icono historia-icono-${detalleInformacion}`}><MapPinned size={20}/></span>
                   <div><p className="vista-sobretitulo">HISTORIA Y CONTEXTO</p><h3>{categorias.find((categoria) => categoria.id === detalleInformacion)?.titulo}</h3></div>
                 </div>
                 {detalleInformacion === "datos" && <DatosPersonalesPaciente paciente={paciente} onActualizar={onPacienteActualizado}/>}
