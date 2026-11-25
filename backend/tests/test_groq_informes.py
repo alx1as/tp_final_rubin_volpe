@@ -21,6 +21,7 @@ def contexto_con_sesion(nota="Observación ficticia"):
     )
     objetivo = SimpleNamespace(
         id=12, descripcion="Objetivo ficticio", estado="activo",
+        fecha_inicio=date(2026, 9, 1), fecha_cierre=None,
         observaciones_generales=None,
     )
     paciente = SimpleNamespace(nombre="Nombre privado", apellido="Apellido privado",
@@ -87,4 +88,34 @@ def test_sin_sesiones_no_consulta_proveedor(monkeypatch):
 def test_falla_si_contexto_supera_limite_sin_recortarlo(monkeypatch):
     monkeypatch.setattr(groq_informes, "MAX_DATOS", 10)
     with pytest.raises(ValueError, match="límite"):
+        groq_informes.GeneradorGroq("clave_ficticia").generar(contexto_con_sesion())
+
+
+def test_estado_del_objetivo_no_anticipa_cierre_posterior():
+    contexto = contexto_con_sesion()
+    objetivo = contexto.objetivos[0]
+    objetivo.estado = "cumplido"
+    objetivo.fecha_cierre = date(2026, 11, 1)
+    datos = groq_informes.datos_minimos(contexto)["objetivos"][0]
+    assert datos["estado_actual"] == "cumplido"
+    assert datos["estado_segun_fechas_al_fin_del_periodo"] == "activo"
+    objetivo.fecha_cierre = date(2026, 10, 30)
+    assert groq_informes.datos_minimos(contexto)["objetivos"][0]["estado_segun_fechas_al_fin_del_periodo"] == "cumplido"
+    objetivo.fecha_inicio = date(2026, 11, 1)
+    assert groq_informes.datos_minimos(contexto)["objetivos"][0]["estado_segun_fechas_al_fin_del_periodo"] == "no determinado"
+
+
+def test_no_acepta_borrador_truncado(monkeypatch):
+    class Respuesta:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def read(self, size):
+            return b'{"choices":[{"finish_reason":"length","message":{"content":"Incompleto"}}]}'
+
+    monkeypatch.setattr(groq_informes, "urlopen", lambda *args, **kwargs: Respuesta())
+    with pytest.raises(ValueError, match="truncado"):
         groq_informes.GeneradorGroq("clave_ficticia").generar(contexto_con_sesion())

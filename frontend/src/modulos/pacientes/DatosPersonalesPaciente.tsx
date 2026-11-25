@@ -1,3 +1,5 @@
+import { useFormularioEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 import { useState, type FormEvent } from "react";
 import { Pencil, UserRound } from "lucide-react";
 import { editarPaciente, type PacienteActualizar } from "../../servicios/api";
@@ -15,6 +17,7 @@ function mostrarFecha(valor: string): string {
 export default function DatosPersonalesPaciente({ paciente, onActualizar }: Props) {
   const [editando, setEditando] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const { registrarFormulario, detectarCambios, reiniciar } = useFormularioEdicion(editando, guardando);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
@@ -26,6 +29,7 @@ export default function DatosPersonalesPaciente({ paciente, onActualizar }: Prop
 
   async function guardarCambios(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (guardando) return;
     const formulario = new FormData(evento.currentTarget);
     const datos: PacienteActualizar = {
       nombre: String(formulario.get("nombre") ?? "").trim(),
@@ -49,6 +53,7 @@ export default function DatosPersonalesPaciente({ paciente, onActualizar }: Prop
     try {
       const actualizado = await editarPaciente(paciente.id, datos);
       onActualizar(actualizado);
+      reiniciar();
       setEditando(false);
       setMensaje("Datos personales actualizados.");
     } catch (fallo) {
@@ -76,7 +81,7 @@ export default function DatosPersonalesPaciente({ paciente, onActualizar }: Prop
       {mensaje && <p role="status" className="ficha-datos-mensaje exito">{mensaje}</p>}
 
       {editando ? (
-        <form className="pacientes-formulario ficha-datos-formulario" onSubmit={guardarCambios}>
+        <form ref={registrarFormulario} onChange={detectarCambios} className="pacientes-formulario ficha-datos-formulario" onSubmit={guardarCambios}>
           <label>Nombre
             <input name="nombre" defaultValue={paciente.nombre} required disabled={guardando} />
           </label>
@@ -93,7 +98,7 @@ export default function DatosPersonalesPaciente({ paciente, onActualizar }: Prop
             <button type="submit" className="pacientes-boton" disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar cambios"}
             </button>
-            <button type="button" disabled={guardando} onClick={() => { setEditando(false); setError(""); }}>
+            <button type="button" disabled={guardando} onClick={() => { if (confirmarSalidaEditor()) { reiniciar(); setEditando(false); setError(""); } }}>
               Cancelar
             </button>
           </div>

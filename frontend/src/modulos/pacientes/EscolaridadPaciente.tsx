@@ -1,3 +1,5 @@
+import { useFormularioEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 
 import { useState, type FormEvent } from "react";
 
@@ -51,19 +53,22 @@ const campos: Campo[] = [
 export default function EscolaridadPaciente({ registros, onGuardar, cargando, error }: Props) {
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const { registrarFormulario, detectarCambios, reiniciar } = useFormularioEdicion(editando !== null, guardando);
   const [errorFormulario, setErrorFormulario] = useState("");
   const [detalles, setDetalles] = useState<number[]>([]);
 
   const actual = registros.find((registro) => registro.id === editando);
 
   function iniciarEdicion(id: number | "nuevo") {
-    if (editando !== null && editando !== id && !window.confirm("Hay un formulario abierto. ¿Querés descartar los cambios y abrir otro?")) return;
+    if (guardando || editando === id || !confirmarSalidaEditor()) return;
+    reiniciar();
     setErrorFormulario("");
     setEditando(id);
   }
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (guardando) return;
 
     const formulario = new FormData(evento.currentTarget);
     const valores = Object.fromEntries(
@@ -82,6 +87,7 @@ export default function EscolaridadPaciente({ registros, onGuardar, cargando, er
     setErrorFormulario("");
     try {
       await onGuardar(valores, typeof editando === "number" ? editando : undefined);
+      reiniciar();
       setEditando(null);
     } catch {
       // La ficha muestra el error y conservamos los datos del formulario.
@@ -153,7 +159,7 @@ export default function EscolaridadPaciente({ registros, onGuardar, cargando, er
       ))}
 
       {!cargando && editando !== null && (
-        <form
+        <form ref={registrarFormulario} onChange={detectarCambios}
           key={editando}
           className="admision-formulario"
           onSubmit={guardar}
@@ -165,13 +171,13 @@ export default function EscolaridadPaciente({ registros, onGuardar, cargando, er
               {campo.etiqueta}
 
               {campo.tipo === "textarea" ? (
-                <textarea
+                <textarea disabled={guardando}
                   name={campo.nombre}
                   rows={3}
                   defaultValue={actual?.[campo.nombre] ?? ""}
                 />
               ) : (
-                <input
+                <input disabled={guardando}
                   name={campo.nombre}
                   type={campo.tipo ?? "text"}
                   required={campo.requerido}
@@ -188,7 +194,7 @@ export default function EscolaridadPaciente({ registros, onGuardar, cargando, er
               {guardando ? "Guardando..." : "Guardar escolaridad"}
             </button>
 
-            <button type="button" onClick={() => setEditando(null)} disabled={guardando}>
+            <button type="button" onClick={() => { if (confirmarSalidaEditor()) { reiniciar(); setEditando(null); } }} disabled={guardando}>
               Cancelar
             </button>
           </div>

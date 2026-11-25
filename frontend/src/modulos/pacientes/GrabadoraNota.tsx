@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEstadoEdicion } from "../../hooks/useEdicion";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ErrorAPI } from "../../servicios/api";
 import { transcribirAudio } from "../../servicios/api-transcripciones";
 import "./GrabadoraNota.css";
@@ -7,11 +8,12 @@ type Props = {
   onConfirmarTexto: (texto: string) => void;
   onOrganizarTexto?: (texto: string) => Promise<boolean | void> | boolean | void;
   etiquetaConfirmar?: string;
+  onEstadoTemporal?: (pendiente: boolean) => void;
 };
-type Estado = "sin-audio" | "grabando" | "procesando" | "lista";
+type Estado = "sin-audio" | "preparando" | "grabando" | "procesando" | "lista";
 
 export default function GrabadoraNota({
-  onConfirmarTexto, onOrganizarTexto, etiquetaConfirmar = "Incorporar texto a la nota",
+  onConfirmarTexto, onOrganizarTexto, onEstadoTemporal, etiquetaConfirmar = "Incorporar texto a la nota",
 }: Props) {
   const [estado, setEstado] = useState<Estado>("sin-audio");
   const [urlAudio, setUrlAudio] = useState<string | null>(null);
@@ -27,6 +29,10 @@ export default function GrabadoraNota({
   const solicitudRef = useRef<AbortController | null>(null);
   const vigenteRef = useRef(true);
   const descartarRef = useRef(false);
+  const iniciandoRef = useRef(false);
+  const pendiente = estado !== "sin-audio";
+  useEstadoEdicion(pendiente, estado === "preparando" || estado === "procesando" || transcribiendo || organizando);
+  useLayoutEffect(() => { onEstadoTemporal?.(pendiente); }, [onEstadoTemporal, pendiente]);
 
   function soltarMicrofono() {
     microfonoRef.current?.getTracks().forEach((pista) => pista.stop());
@@ -56,11 +62,14 @@ export default function GrabadoraNota({
   }, []);
 
   async function iniciar() {
+    if (iniciandoRef.current || estado !== "sin-audio") return;
     setError("");
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       setError("Este navegador no permite grabar audio. Probá con una versión actualizada.");
       return;
     }
+    iniciandoRef.current = true;
+    setEstado("preparando");
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (!vigenteRef.current) {
@@ -78,6 +87,7 @@ export default function GrabadoraNota({
         if (evento.data.size > 0) fragmentos.push(evento.data);
       };
       grabadora.onerror = () => {
+        descartarRef.current = true;
         soltarMicrofono();
         if (vigenteRef.current) {
           setEstado("sin-audio");
@@ -103,10 +113,12 @@ export default function GrabadoraNota({
       setEstado("grabando");
     } catch (fallo) {
       soltarMicrofono();
+      if (!vigenteRef.current) return;
+      setEstado("sin-audio");
       setError(fallo instanceof DOMException && fallo.name === "NotAllowedError"
         ? "No se concedió permiso para usar el micrófono."
         : "No se pudo iniciar la grabación. Revisá el micrófono y sus permisos.");
-    }
+    } finally { iniciandoRef.current = false; }
   }
 
   function detener() {
@@ -127,7 +139,9 @@ export default function GrabadoraNota({
   }
 
   async function solicitarTranscripcion() {
-    if (!audio || transcribiendo) return;
+    if (!audio || transcribiendo || organizando) return;
+    if (audio.size > 25 * 1024 * 1024) { setError("El audio supera los 25 MiB. Grabá una nota más corta."); return; }
+    if (texto !== null && !window.confirm("Se reemplazará la transcripción actual. ¿Continuar?")) return;
     setError("");
     const controlador = new AbortController();
     solicitudRef.current = controlador;
@@ -153,13 +167,13 @@ export default function GrabadoraNota({
   }
 
   function confirmar() {
-    if (!texto?.trim() || organizando) return;
+    if (!texto?.trim() || transcribiendo || organizando) return;
     onConfirmarTexto(texto.trim());
     descartar();
   }
 
   async function organizar() {
-    if (!texto?.trim() || !onOrganizarTexto || organizando) return;
+    if (!texto?.trim() || !onOrganizarTexto || transcribiendo || organizando) return;
     setError("");
     setOrganizando(true);
     try {
@@ -185,13 +199,14 @@ export default function GrabadoraNota({
         {estado === "grabando" && (
           <button type="button" className="grabadora-nota-detenida" onClick={detener}>Detener grabación</button>
         )}
+        {estado === "preparando" && <span role="status">Solicitando acceso al micrófono...</span>}
         {estado === "procesando" && <span>Preparando audio...</span>}
         {estado === "lista" && (
           <>
             <button type="button" onClick={solicitarTranscripcion} disabled={transcribiendo || organizando}>
               {transcribiendo ? "Transcribiendo..." : "Transcribir"}
             </button>
-            <button type="button" onClick={descartar} disabled={organizando}>Descartar audio</button>
+            <button type="button" onClick={() => { if (window.confirm("¿Descartar el audio y su transcripción?")) descartar(); }} disabled={organizando}>Descartar audio</button>
           </>
         )}
       </div>
@@ -204,15 +219,15 @@ export default function GrabadoraNota({
       {texto !== null && (
         <div className="grabadora-nota-revision">
           <label>Revisar y corregir transcripción
-            <textarea rows={4} value={texto} onChange={(evento) => setTexto(evento.target.value)} />
+            <textarea rows={4} disabled={transcribiendo || organizando} value={texto} onChange={(evento) => setTexto(evento.target.value)} />
           </label>
           <div className="grabadora-nota-destinos">
-            <button type="button" onClick={confirmar} disabled={!texto.trim() || organizando}>
+            <button type="button" onClick={confirmar} disabled={!texto.trim() || transcribiendo || organizando}>
               {etiquetaConfirmar}
             </button>
             {onOrganizarTexto && (
               <button type="button" className="grabadora-nota-ia"
-                onClick={() => void organizar()} disabled={!texto.trim() || organizando}>
+                onClick={() => void organizar()} disabled={!texto.trim() || transcribiendo || organizando}>
                 {organizando ? "Organizando con IA..." : "Organizar con IA"}
               </button>
             )}

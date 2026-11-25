@@ -34,7 +34,7 @@ type Pagina<T> = {
 };
 
 // Para producción se puede definir VITE_API_URL; localmente usamos el proxy de Vite.
-const API_URL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
+const API_URL = (import.meta.env?.VITE_API_URL || "").replace(/\/$/, "");
 
 export class ErrorAPI extends Error {
   status: number;
@@ -185,7 +185,7 @@ export function guardarEscolaridad(
   const ruta = `/api/pacientes/${pacienteId}/escolaridades` +
     (escolaridadId === undefined ? "" : `/${escolaridadId}`);
   return solicitar(ruta, {
-    method: escolaridadId === undefined ? "POST" : "PUT",
+    method: escolaridadId === undefined ? "POST" : "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datos),
   });
@@ -202,7 +202,7 @@ export function guardarProfesionalTratante(
   const ruta = `/api/pacientes/${pacienteId}/profesionales-tratantes` +
     (profesionalId === undefined ? "" : `/${profesionalId}`);
   return solicitar(ruta, {
-    method: profesionalId === undefined ? "POST" : "PUT",
+    method: profesionalId === undefined ? "POST" : "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datos),
   });
@@ -219,7 +219,7 @@ export function guardarObjetivo(
   const ruta = `/api/pacientes/${pacienteId}/objetivos` +
     (objetivoId === undefined ? "" : `/${objetivoId}`);
   return solicitar(ruta, {
-    method: objetivoId === undefined ? "POST" : "PUT",
+    method: objetivoId === undefined ? "POST" : "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(datos),
   });

@@ -1,3 +1,5 @@
+import { useFormularioEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 
 import { useState, type FormEvent } from "react";
 
@@ -40,10 +42,12 @@ export default function AdmisionPaciente({
 }: Props) {
   const [editando, setEditando] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const { registrarFormulario, detectarCambios, reiniciar } = useFormularioEdicion(editando, guardando);
   const [verAntecedentes, setVerAntecedentes] = useState(false);
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (guardando) return;
 
     const formulario = new FormData(evento.currentTarget);
     const leer = (nombre: string) =>
@@ -63,6 +67,7 @@ export default function AdmisionPaciente({
     setGuardando(true);
     try {
       await onGuardar(datos);
+      reiniciar();
       setEditando(false);
     } catch {
       // El error se muestra desde la ficha; conservar el formulario abierto.
@@ -92,10 +97,10 @@ export default function AdmisionPaciente({
       {cargando ? (
         <p className="pacientes-descripcion">Cargando admisión...</p>
       ) : editando ? (
-        <form className="admision-formulario" onSubmit={guardar}>
+        <form ref={registrarFormulario} onChange={detectarCambios} className="admision-formulario" onSubmit={guardar}>
           <label>
             Fecha
-            <input
+            <input disabled={guardando}
               type="date"
               name="fecha"
               defaultValue={admision?.fecha ?? fechaInicial}
@@ -107,7 +112,7 @@ export default function AdmisionPaciente({
             <label key={campo.clave}>
               {campo.etiqueta}
               {campo.clave === "motivo_consulta" && " *"}
-              <textarea
+              <textarea disabled={guardando}
                 name={campo.clave}
                 rows={3}
                 defaultValue={admision?.[campo.clave] ?? ""}
@@ -120,7 +125,7 @@ export default function AdmisionPaciente({
             <button type="submit" className="pacientes-boton" disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar admisión"}
             </button>
-            <button type="button" onClick={() => setEditando(false)} disabled={guardando}>
+            <button type="button" onClick={() => { if (confirmarSalidaEditor()) { reiniciar(); setEditando(false); } }} disabled={guardando}>
               Cancelar
             </button>
           </div>

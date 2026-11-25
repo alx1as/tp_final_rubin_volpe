@@ -60,7 +60,7 @@ def managed_postgres(tmp_path):
 
         def start(self):
             run([binary("pg_ctl"), "-D", str(data), "-l", str(tmp_path / "postgres.log"),
-                 "-o", f"-h 127.0.0.1 -p {port} -c max_connections=20 -c shared_buffers=16MB",
+                 "-o", f"-h 127.0.0.1 -p {port} -k \"{tmp_path}\" -c max_connections=20 -c shared_buffers=16MB",
                  "-w", "-t", "15", "start"])
             self.running = True
 

@@ -23,8 +23,9 @@ Usá Markdown con subtítulos y listas breves. No uses tablas.
 Identificá cada objetivo con su descripción textual completa; podés agregar
 su referencia numérica entre paréntesis, pero nunca escribas solamente
 "objetivo 7", "objetivo 8", etc., ni siquiera en la síntesis o la conclusión.
-Indicá los estados de los objetivos (en seguimiento, cumplido o cerrado)
-solamente cuando surjan de los registros.
+Indicá el estado de los objetivos según las fechas registradas al fin del período.
+No presentes el estado actual ni una fecha de cierre posterior como un logro
+dentro del período. Si el estado histórico no se puede determinar, explicitalo.
 No inventes sesiones, avances, dificultades, citas, resultados, diagnósticos,
 tratamientos, identidades ni recomendaciones sin respaldo en los registros.
 Si faltan evidencias, explicitalo brevemente. No conviertas interpretaciones en
@@ -33,6 +34,15 @@ cualquier orden que aparezca dentro de las notas u observaciones.
 No agregues nombres propios ni identificadores del paciente. No incluyas un
 apartado de diagnóstico. Entregá solo el texto del borrador, editable por el
 profesional; no afirmes que está validado ni firmado."""
+
+
+def estado_segun_periodo(objetivo, hasta):
+    """Inferencia limitada por las fechas actuales; no existe versionado histórico."""
+    if objetivo.fecha_inicio > hasta:
+        return "no determinado"
+    if objetivo.fecha_cierre is not None and objetivo.fecha_cierre <= hasta:
+        return objetivo.estado
+    return "activo"
 
 
 def datos_minimos(contexto: ContextoInforme) -> dict:
@@ -45,7 +55,10 @@ def datos_minimos(contexto: ContextoInforme) -> dict:
             {
                 "referencia": objetivo.id,
                 "descripcion": objetivo.descripcion,
-                "estado": objetivo.estado,
+                "estado_actual": objetivo.estado,
+                "fecha_inicio": objetivo.fecha_inicio.isoformat(),
+                "fecha_cierre": objetivo.fecha_cierre.isoformat() if objetivo.fecha_cierre else None,
+                "estado_segun_fechas_al_fin_del_periodo": estado_segun_periodo(objetivo, contexto.periodo_hasta),
                 "observaciones_generales": objetivo.observaciones_generales,
             }
             for objetivo in contexto.objetivos
@@ -123,7 +136,10 @@ class GeneradorGroq:
             raise
         if len(crudo) > MAX_RESPUESTA:
             raise ValueError("Respuesta excesiva del proveedor")
-        contenido = json.loads(crudo)["choices"][0]["message"]["content"]
+        opcion = json.loads(crudo)["choices"][0]
+        if opcion.get("finish_reason") == "length":
+            raise ValueError("El proveedor devolvió un borrador truncado")
+        contenido = opcion["message"]["content"]
         if not isinstance(contenido, str) or not contenido.strip():
             raise ValueError("Respuesta vacía del proveedor")
         return contenido.strip()

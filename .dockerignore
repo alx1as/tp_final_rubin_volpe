@@ -1,0 +1,12 @@
+.git
+.github
+**/node_modules
+**/dist
+**/.venv
+**/venv
+**/__pycache__
+**/.pytest_cache
+**/.test-postgres
+**/.env
+**/.env.*
+**/*.pyc

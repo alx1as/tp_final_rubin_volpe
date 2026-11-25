@@ -1,3 +1,5 @@
+import { useEstadoEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   guardarRegistroSesion, listarObservaciones, listarSesiones, organizarRegistroConIA,
@@ -53,6 +55,7 @@ export default function SesionesPaciente({
   const [error, setError] = useState("");
   const [sesionSeleccionada, setSesionSeleccionada] = useState<number | null>(null);
   const [observaciones, setObservaciones] = useState<Observacion[]>([]);
+  const [revisionDetalle, setRevisionDetalle] = useState(0);
   const [cargandoObs, setCargandoObs] = useState(false);
   const [errorObs, setErrorObs] = useState("");
   const [mesFiltro, setMesFiltro] = useState("todos");
@@ -63,6 +66,8 @@ export default function SesionesPaciente({
   const [bloques, setBloques] = useState<Bloque[]>([]);
   const [bajas, setBajas] = useState<number[]>([]);
   const [original, setOriginal] = useState("");
+  const [audioPendiente, setAudioPendiente] = useState(false);
+  const [claveEditor, setClaveEditor] = useState(0);
   const [guardando, setGuardando] = useState(false);
   const [organizando, setOrganizando] = useState(false);
   const [errorFormulario, setErrorFormulario] = useState("");
@@ -76,9 +81,8 @@ export default function SesionesPaciente({
   // Se mantiene un registro de cambios reales para no descartar un borrador por accidente.
   const contenidoActual = JSON.stringify({ form, bloques: bloques.map(({ id, datos }) => ({ id, datos })), bajas });
   const hayCambios = editando !== null && estadoInicial !== contenidoActual && !cargandoEdicion;
-  function confirmarAbandono() {
-    return !hayCambios || window.confirm("Hay cambios sin guardar en la sesión. ¿Querés descartarlos?");
-  }
+  useEstadoEdicion(hayCambios, guardando || organizando || cargandoEdicion);
+  const confirmarAbandono = confirmarSalidaEditor;
 
   useEffect(() => {
     let vigente = true;
@@ -113,24 +117,18 @@ export default function SesionesPaciente({
       .catch((fallo) => { if (vigente) setErrorObs(fallo instanceof Error ? fallo.message : "No se pudieron cargar las observaciones."); })
       .finally(() => { if (vigente) setCargandoObs(false); });
     return () => { vigente = false; };
-  }, [pacienteId, sesionSeleccionada]);
+  }, [pacienteId, sesionSeleccionada, revisionDetalle]);
 
   useEffect(() => {
-    if (sesionDestino == null) return;
+    if (sesionDestino == null || cargando) return;
     const animacion = window.requestAnimationFrame(() => {
+      setMesFiltro("todos");
       setSesionSeleccionada(sesionDestino);
       document.getElementById(`sesion-${sesionDestino}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
     return () => window.cancelAnimationFrame(animacion);
   }, [sesionDestino, cargando]);
 
-
-  useEffect(() => {
-    if (!hayCambios) return;
-    function evitarCierre(evento: BeforeUnloadEvent) { evento.preventDefault(); }
-    window.addEventListener("beforeunload", evitarCierre);
-    return () => window.removeEventListener("beforeunload", evitarCierre);
-  }, [hayCambios]);
 
   const meses = [...new Set(sesiones.map((sesion) => sesion.fecha.slice(0, 7)))];
   const sesionesVisibles = mesFiltro === "todos" ? sesiones : sesiones.filter((sesion) => sesion.fecha.startsWith(mesFiltro));
@@ -143,6 +141,8 @@ export default function SesionesPaciente({
       objetivo_id: obs.objetivo_id, contexto: obs.contexto, conducta_observable: obs.conducta_observable,
       intervencion: obs.intervencion, resultado: obs.resultado, nota_libre: obs.nota_libre,
     }, obs.id));
+    setAudioPendiente(false);
+    setClaveEditor((n) => n + 1);
     setEstadoInicial(JSON.stringify({ form: datos, bloques: iniciales.map(({ id, datos }) => ({ id, datos })), bajas: [] }));
     setForm(datos);
     setBloques(iniciales);
@@ -159,9 +159,9 @@ export default function SesionesPaciente({
   }
   useEffect(() => {
     if (!solicitudNueva || solicitudNuevaAtendida.current === solicitudNueva) return;
-    solicitudNuevaAtendida.current = solicitudNueva;
     const id = window.requestAnimationFrame(() => {
-      if (confirmarAbandono()) prepararNueva();
+      solicitudNuevaAtendida.current = solicitudNueva;
+      prepararNueva();
       onSolicitudNuevaProcesada?.();
     });
     return () => window.cancelAnimationFrame(id);
@@ -194,6 +194,7 @@ export default function SesionesPaciente({
     if (guardando || organizando || !confirmarAbandono()) return;
     solicitudEdicion.current += 1;
     setEditando(null);
+    setAudioPendiente(false);
     setCargandoEdicion(false);
   }
   function cambiarBloque(clave: number, cambios: Partial<ObservacionGuardar>) {
@@ -211,7 +212,7 @@ export default function SesionesPaciente({
   }
 
   async function organizarTexto(texto: string): Promise<boolean> {
-    if (editando === null || organizando) return false;
+    if (editando === null || organizando || guardando || cargandoEdicion) return false;
     const solicitud = ++solicitudOrganizador.current;
     setOrganizando(true);
     setErrorFormulario("");
@@ -224,6 +225,10 @@ export default function SesionesPaciente({
         ...obs, objetivo_id: obs.objetivo_id !== null && permitidos.has(obs.objetivo_id)
           ? obs.objetivo_id : null,
       }, undefined, true));
+      if (bloques.length + nuevos.length > 30) {
+        setErrorFormulario("La propuesta supera el máximo de 30 observaciones. Conservamos la transcripción para incorporarla manualmente.");
+        return false;
+      }
       // La IA suma sugerencias al borrador, nunca sobrescribe textos existentes.
       setBloques((actuales) => [...actuales, ...nuevos]);
       if (propuesta.nota_general) setForm((actual) => ({
@@ -244,8 +249,9 @@ export default function SesionesPaciente({
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    if (editando === null || guardando || organizando || cargandoEdicion) return;
+    if (editando === null || guardando || organizando || cargandoEdicion || cargando) return;
     setErrorFormulario("");
+    if (audioPendiente) { setErrorFormulario("Incorporá o descartá la nota de voz antes de guardar."); return; }
     if (!form.fecha) { setErrorFormulario("Completá la fecha de la sesión."); return; }
     const invalidas = bloques.some((bloque) => !algunaNota(bloque.datos));
     if (invalidas) { setErrorFormulario("Hay observaciones vacías. Completá al menos un campo o quitá el bloque."); return; }
@@ -269,6 +275,7 @@ export default function SesionesPaciente({
       setMesFiltro("todos");
       setSesionSeleccionada(resultado.sesion.id);
       setObservaciones(resultado.observaciones);
+      setRevisionDetalle((n) => n + 1);
       setEditando(null);
       setOriginal("");
       onCambiarSesiones?.();
@@ -322,7 +329,7 @@ export default function SesionesPaciente({
                   onChange={(e) => setForm((v) => ({ ...v, nota_general: e.target.value }))} />
               </label>
               <div className="registro-unico-audio">
-                <GrabadoraNota onConfirmarTexto={usarComoNotaGeneral} onOrganizarTexto={organizarTexto}
+                <GrabadoraNota key={claveEditor} onEstadoTemporal={setAudioPendiente} onConfirmarTexto={usarComoNotaGeneral} onOrganizarTexto={organizarTexto}
                   etiquetaConfirmar="Usar como nota general" />
                 <p>Podés dictar libremente. Si elegís organizar con IA, revisá las observaciones y los objetivos sugeridos. Evitá incluir nombres u otros datos identificatorios en el audio enviado al servicio externo.</p>
               </div>
@@ -340,7 +347,7 @@ export default function SesionesPaciente({
                   <h4>Observaciones <span className="registro-unico-contador">{bloques.length}</span></h4>
                   <p>Registrá solo lo observado. Cada bloque puede vincularse con un objetivo existente.</p>
                 </div>
-                <button type="button" className="registro-unico-agregar" onClick={() => setBloques((v) => [...v, nuevoBloque()])}
+                <button type="button" className="registro-unico-agregar" onClick={() => { const bloque = nuevoBloque(); setBloques((v) => [...v, bloque]); }}
                   disabled={bloques.length >= 30}>+ Agregar observación</button>
               </div>
               {bloques.length === 0 && <p className="registro-unico-vacio">No hay observaciones cargadas. Podés guardar solo la nota general o agregar una observación.</p>}
@@ -373,8 +380,9 @@ export default function SesionesPaciente({
           )}
           {avisoFormulario && <p role="status" className="registro-unico-aviso">{avisoFormulario}</p>}
           {errorFormulario && <p role="alert" className="registro-unico-error">{errorFormulario}</p>}
+          {audioPendiente && <p role="status" className="registro-unico-ayuda">Incorporá o descartá la nota de voz antes de guardar.</p>}
           <div className="pacientes-acciones registro-unico-acciones">
-            <button className="pacientes-boton" type="submit" disabled={guardando || organizando || cargandoEdicion}>
+            <button className="pacientes-boton" type="submit" disabled={guardando || organizando || cargandoEdicion || audioPendiente || cargando}>
               {guardando ? "Guardando registro..." : "Guardar sesión"}
             </button>
             <button type="button" onClick={cerrarFormulario} disabled={guardando || organizando}>Cancelar</button>
@@ -401,19 +409,19 @@ export default function SesionesPaciente({
                 <button type="button" onClick={() => setSesionSeleccionada((id) => id === sesion.id ? null : sesion.id)}>
                   {sesionSeleccionada === sesion.id ? "Ocultar detalle" : "Ver detalle"}
                 </button>
-                <button type="button" onClick={() => void abrirEdicion(sesion)} disabled={guardando || organizando}>
+                <button type="button" onClick={() => void abrirEdicion(sesion)} disabled={guardando || organizando || cargandoEdicion}>
                   Editar registro
                 </button>
               </div>
             </div>
             {sesionSeleccionada === sesion.id && (
               <div className="seguimiento-subpanel" id="sesion-detalle">
-                {objetivoOrigen != null && onVolverObjetivo && (
+                {objetivoOrigen != null && sesion.id === sesionDestino && onVolverObjetivo && (
                   <button type="button" className="texto-accion" onClick={() => onVolverObjetivo(objetivoOrigen)}>← Volver al objetivo</button>
                 )}
                 <div className="admision-cabecera">
                   <h3>Observaciones · {mostrarFecha(sesion.fecha)}</h3>
-                  <button type="button" className="registro-unico-agregar" onClick={() => void abrirEdicion(sesion)}>Editar sesión y observaciones</button>
+                  <button type="button" className="registro-unico-agregar" disabled={guardando || organizando || cargandoEdicion} onClick={() => void abrirEdicion(sesion)}>Editar sesión y observaciones</button>
                 </div>
                 {cargandoObs && <p className="pacientes-descripcion">Cargando observaciones...</p>}
                 {errorObs && <p role="alert">{errorObs}</p>}

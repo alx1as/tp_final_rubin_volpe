@@ -27,10 +27,6 @@ export default function CronologiaPaciente({ pacienteId, mes, objetivos, revisio
 
   useEffect(() => {
     let vigente = true;
-    setCargando(true);
-    setError("");
-    setEntradas([]);
-    setAbiertas([]);
     listarCronologia(pacienteId, mes)
       .then((datos) => { if (vigente) setEntradas(datos); })
       .catch((fallo) => {

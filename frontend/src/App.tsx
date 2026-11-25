@@ -1,3 +1,4 @@
+import { confirmarSalidaEditor, registroEdicion } from "./hooks/estadoEdicion";
 import { useEffect, useState } from "react";
 import { LogOut, UserRound } from "lucide-react";
 import "./App.css";
@@ -35,10 +36,17 @@ export default function App() {
     return () => window.removeEventListener("sesion-vencida", sesionVencida);
   }, []);
 
+  useEffect(() => {
+    function antesDeSalir(evento: BeforeUnloadEvent) {
+      const { pendiente, ocupado } = registroEdicion.estado();
+      if (pendiente || ocupado) { evento.preventDefault(); evento.returnValue = ""; }
+    }
+    window.addEventListener("beforeunload", antesDeSalir);
+    return () => window.removeEventListener("beforeunload", antesDeSalir);
+  }, []);
+
   async function salir() {
-    const formularioAbierto = document.querySelector('.vista-pestana:not([hidden]) form.admision-formulario, .vista-pestana:not([hidden]) form.ficha-datos-formulario');
-    const informePendiente = document.querySelector('.vista-pestana:not([hidden]) [data-pendiente="true"]');
-    if ((formularioAbierto || informePendiente) && !window.confirm("Hay posibles cambios sin guardar. ¿Querés cerrar sesión?")) return;
+    if (cerrando || !confirmarSalidaEditor()) return;
     setCerrando(true);
     setErrorSalida("");
     try {
@@ -85,7 +93,7 @@ export default function App() {
           </button>
         </header>
         {errorSalida && <p role="alert" className="mensaje-error">{errorSalida}</p>}
-        <Pacientes />
+        <div inert={cerrando}><Pacientes /></div>
       </main>
     </div>
   );
