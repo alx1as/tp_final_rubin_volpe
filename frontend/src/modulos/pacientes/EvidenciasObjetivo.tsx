@@ -14,14 +14,12 @@ type Props = {
 export default function EvidenciasObjetivo({ pacienteId, objetivoId, revision, onVerSesion, inicialmenteAbierto = false }: Props) {
   const [abierto, setAbierto] = useState(inicialmenteAbierto);
   const [evidencias, setEvidencias] = useState<EvidenciaObjetivo[]>([]);
-  const [cargando, setCargando] = useState(false);
+  const [cargando, setCargando] = useState(inicialmenteAbierto);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!abierto) return;
     let vigente = true;
-    setCargando(true);
-    setError("");
     listarEvidenciasObjetivo(pacienteId, objetivoId)
       .then((datos) => { if (vigente) setEvidencias(datos); })
       .catch((fallo) => {
@@ -33,7 +31,10 @@ export default function EvidenciasObjetivo({ pacienteId, objetivoId, revision, o
 
   return (
     <div className="seguimiento-evidencias">
-      <button type="button" className="seguimiento-link" onClick={() => setAbierto(!abierto)}
+      <button type="button" className="seguimiento-link" onClick={() => {
+        if (!abierto) { setCargando(true); setError(""); }
+        setAbierto(!abierto);
+      }}
         aria-expanded={abierto}>
         {abierto ? "Ocultar evidencias" : "Ver evidencias"}
       </button>

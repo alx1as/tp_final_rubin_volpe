@@ -38,7 +38,7 @@ def main():
         run_pg("initdb", "-D", str(data), "-U", "auth_test", "-A", "trust",
                "--encoding=UTF8", "--locale=C", "--no-sync")
         run_pg("pg_ctl", "-D", str(data), "-l", str(base / "postgres.log"),
-               "-o", f"-h 127.0.0.1 -p {port} -c max_connections=30 -c shared_buffers=16MB",
+               "-o", f"-h 127.0.0.1 -p {port} -k \"{base}\" -c max_connections=30 -c shared_buffers=16MB",
                "-w", "-t", "15", "start")
         run_pg("createdb", "-h", "127.0.0.1", "-p", str(port), "-U", "auth_test", "seguimiento_auth_test")
         environment = os.environ.copy()

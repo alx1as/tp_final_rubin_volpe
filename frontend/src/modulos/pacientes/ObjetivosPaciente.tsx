@@ -1,3 +1,5 @@
+import { useFormularioEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 import { useEffect, useState, type FormEvent } from "react";
 import EvidenciasObjetivo from "./EvidenciasObjetivo";
 
@@ -39,6 +41,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
   const [estadoFormulario, setEstadoFormulario] = useState<EstadoObjetivo>("activo");
   const [errorFormulario, setErrorFormulario] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const { registrarFormulario, detectarCambios, reiniciar } = useFormularioEdicion(editando !== null, guardando);
   const [filtro, setFiltro] = useState<"todos" | EstadoObjetivo>("todos");
   const [detalles, setDetalles] = useState<number[]>(objetivoDestino != null ? [objetivoDestino] : []);
   useEffect(() => {
@@ -52,7 +55,8 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
   const objetivoActual = registros.find((objetivo) => objetivo.id === editando);
 
   function abrirFormulario(id: number | "nuevo") {
-    if (editando !== null && editando !== id && !window.confirm("Hay datos del objetivo sin guardar. ¿Querés cambiar de formulario?")) return;
+    if (guardando || editando === id || !confirmarSalidaEditor()) return;
+    reiniciar();
     const registro = registros.find((objetivo) => objetivo.id === id);
     setEstadoFormulario(registro?.estado ?? "activo");
     setErrorFormulario("");
@@ -61,6 +65,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (guardando) return;
 
     const datos = new FormData(evento.currentTarget);
     const descripcion = String(datos.get("descripcion") ?? "").trim();
@@ -96,6 +101,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
         fecha_cierre: fecha_cierre || null,
         observaciones_generales: observaciones_generales || null,
       }, typeof editando === "number" ? editando : undefined);
+      reiniciar();
       setEditando(null);
     } catch {
       // La ficha muestra el error y conservamos el formulario para reintentar.
@@ -153,7 +159,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
             </button>
             {detalles.includes(objetivo.id) && <div className="registro-detalles">
               {objetivo.observaciones_generales && <p><strong>Observaciones:</strong> {objetivo.observaciones_generales}</p>}
-              <EvidenciasObjetivo pacienteId={pacienteId} objetivoId={objetivo.id} revision={revisionEvidencias} onVerSesion={onVerSesion} inicialmenteAbierto={objetivoDestino === objetivo.id} />
+              <EvidenciasObjetivo key={`${objetivo.id}-${revisionEvidencias}`} pacienteId={pacienteId} objetivoId={objetivo.id} revision={revisionEvidencias} onVerSesion={onVerSesion} inicialmenteAbierto={objetivoDestino === objetivo.id} />
             </div>}
           </div>
 
@@ -164,7 +170,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
       ))}
 
       {!cargando && editando !== null && (
-        <form
+        <form ref={registrarFormulario} onChange={detectarCambios}
           key={editando}
           className="admision-formulario"
           onSubmit={guardar}
@@ -175,7 +181,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
 
           <label>
             Descripción del objetivo
-            <textarea
+            <textarea disabled={guardando}
               name="descripcion"
               rows={3}
               required
@@ -185,7 +191,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
 
           <label>
             Fecha de inicio
-            <input
+            <input disabled={guardando}
               type="date"
               name="fecha_inicio"
               required
@@ -195,7 +201,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
 
           <label>
             Estado
-            <select
+            <select disabled={guardando}
               name="estado"
               value={estadoFormulario}
               onChange={(evento) => {
@@ -212,7 +218,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
           {estadoFormulario !== "activo" && (
             <label>
               Fecha de cierre
-              <input
+              <input disabled={guardando}
                 type="date"
                 name="fecha_cierre"
                 required
@@ -223,7 +229,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
 
           <label>
             Observaciones generales
-            <textarea
+            <textarea disabled={guardando}
               name="observaciones_generales"
               rows={3}
               defaultValue={objetivoActual?.observaciones_generales ?? ""}
@@ -237,7 +243,7 @@ export default function ObjetivosPaciente({ registros, onGuardar, cargando, erro
               {guardando ? "Guardando..." : "Guardar objetivo"}
             </button>
 
-            <button type="button" onClick={() => setEditando(null)} disabled={guardando}>
+            <button type="button" onClick={() => { if (confirmarSalidaEditor()) { reiniciar(); setEditando(null); } }} disabled={guardando}>
               Cancelar
             </button>
           </div>

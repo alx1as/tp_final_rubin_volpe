@@ -1,3 +1,5 @@
+import { useFormularioEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 import { useState, type FormEvent } from "react";
 
 export type ProfesionalTratante = {
@@ -38,18 +40,21 @@ const campos: Campo[] = [
 export default function ProfesionalesIntervinientes({ registros, onGuardar, cargando, error }: Props) {
   const [editando, setEditando] = useState<number | "nuevo" | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const { registrarFormulario, detectarCambios, reiniciar } = useFormularioEdicion(editando !== null, guardando);
   const [errorFormulario, setErrorFormulario] = useState("");
 
   const actual = registros.find((registro) => registro.id === editando);
 
   function abrirFormulario(id: number | "nuevo") {
-    if (editando !== null && editando !== id && !window.confirm("Hay un formulario abierto. ¿Querés descartar los cambios y abrir otro?")) return;
+    if (guardando || editando === id || !confirmarSalidaEditor()) return;
+    reiniciar();
     setErrorFormulario("");
     setEditando(id);
   }
 
   async function guardar(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (guardando) return;
     const formulario = new FormData(evento.currentTarget);
     const valores = Object.fromEntries(
       campos.map((campo) => [
@@ -67,6 +72,7 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar, carg
     setErrorFormulario("");
     try {
       await onGuardar(valores, typeof editando === "number" ? editando : undefined);
+      reiniciar();
       setEditando(null);
     } catch {
       // La ficha muestra el error; conservamos el formulario para reintentar.
@@ -124,20 +130,20 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar, carg
       ))}
 
       {!cargando && editando !== null && (
-        <form key={editando} className="admision-formulario" onSubmit={guardar}>
+        <form ref={registrarFormulario} onChange={detectarCambios} key={editando} className="admision-formulario" onSubmit={guardar}>
           <h3>{editando === "nuevo" ? "Nuevo profesional" : "Editar profesional"}</h3>
 
           {campos.map((campo) => (
             <label key={campo.nombre}>
               {campo.etiqueta}
               {campo.tipo === "textarea" ? (
-                <textarea
+                <textarea disabled={guardando}
                   name={campo.nombre}
                   rows={3}
                   defaultValue={actual?.[campo.nombre] ?? ""}
                 />
               ) : (
-                <input
+                <input disabled={guardando}
                   name={campo.nombre}
                   type={campo.tipo ?? "text"}
                   required={campo.requerido}
@@ -153,7 +159,7 @@ export default function ProfesionalesIntervinientes({ registros, onGuardar, carg
             <button type="submit" className="pacientes-boton" disabled={guardando}>
               {guardando ? "Guardando..." : "Guardar profesional"}
             </button>
-            <button type="button" onClick={() => setEditando(null)} disabled={guardando}>
+            <button type="button" onClick={() => { if (confirmarSalidaEditor()) { reiniciar(); setEditando(null); } }} disabled={guardando}>
               Cancelar
             </button>
           </div>

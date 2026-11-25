@@ -1,3 +1,5 @@
+import { useFormularioEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowRight, Search, Plus, UsersRound, UserCheck, ShieldCheck } from "lucide-react";
@@ -27,6 +29,7 @@ export default function Pacientes() {
 
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const { registrarFormulario, detectarCambios, reiniciar } = useFormularioEdicion(creando, guardando);
   const [error, setError] = useState("");
 
   // Cargar pacientes desde PostgreSQL al abrir la pantalla.
@@ -69,6 +72,7 @@ export default function Pacientes() {
   // Guardar un nuevo paciente mediante la API.
   async function crearPaciente(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
+    if (guardando) return;
 
     const datos = new FormData(evento.currentTarget);
 
@@ -90,6 +94,7 @@ export default function Pacientes() {
       const guardado = await guardarPaciente(nuevoPaciente);
 
       setPacientes((actuales) => [...actuales, guardado]);
+      reiniciar();
       setCreando(false);
     } catch (fallo) {
       setError(
@@ -128,7 +133,7 @@ export default function Pacientes() {
           <p className="pacientes-subtitulo">ESPACIO DE TRABAJO</p>
           <h1>Pacientes<span className="punto-titulo">.</span></h1>
           <p>Un espacio para organizar cada acompañamiento, registrar encuentros y consultar la evolución.</p>
-          <button type="button" className="pacientes-boton pacientes-boton-grande" onClick={() => setCreando(!creando)}>
+          <button type="button" className="pacientes-boton pacientes-boton-grande" disabled={guardando || cargando} onClick={() => { if (creando && !confirmarSalidaEditor()) return; reiniciar(); setCreando(!creando); }}>
             {creando ? "Cerrar formulario" : <><Plus size={18} aria-hidden="true" /> Nuevo paciente</>}
           </button>
         </div>
@@ -146,23 +151,23 @@ export default function Pacientes() {
         <section className="pacientes-panel">
           <h2>Nuevo paciente</h2>
 
-          <form
+          <form ref={registrarFormulario} onChange={detectarCambios}
             className="pacientes-formulario"
             onSubmit={crearPaciente}
           >
             <label>
               Nombre
-              <input name="nombre" required />
+              <input disabled={guardando} name="nombre" required />
             </label>
 
             <label>
               Apellido
-              <input name="apellido" required />
+              <input disabled={guardando} name="apellido" required />
             </label>
 
             <label>
               Fecha de nacimiento
-              <input
+              <input disabled={guardando}
                 name="fecha_nacimiento"
                 type="date"
                 required
@@ -171,7 +176,7 @@ export default function Pacientes() {
 
             <label>
               Inicio del seguimiento
-              <input
+              <input disabled={guardando}
                 name="fecha_inicio_seguimiento"
                 type="date"
                 required
@@ -189,7 +194,7 @@ export default function Pacientes() {
 
               <button
                 type="button"
-                onClick={() => setCreando(false)}
+                onClick={() => { if (confirmarSalidaEditor()) { reiniciar(); setCreando(false); } }}
                 disabled={guardando}
               >
                 Cancelar
@@ -206,7 +211,7 @@ export default function Pacientes() {
         </div>
         <label className="busqueda-contenedor">
           <Search size={19} aria-hidden="true" />
-          <input className="pacientes-busqueda" type="search"
+          <input disabled={guardando} className="pacientes-busqueda" type="search"
             placeholder="Buscar por nombre o apellido" aria-label="Buscar pacientes"
             value={busqueda} onChange={(evento) => setBusqueda(evento.target.value)} />
         </label>
@@ -219,7 +224,7 @@ export default function Pacientes() {
               type="button"
               className="pacientes-fila"
               key={paciente.id}
-              onClick={() => setSeleccionado(paciente)}
+              disabled={guardando} onClick={() => { if (!confirmarSalidaEditor()) return; reiniciar(); setCreando(false); setSeleccionado(paciente); }}
             >
               <span className="pacientes-avatar">
                 {paciente.nombre[0]}

@@ -1,3 +1,6 @@
+import { periodoSesiones } from "./seguimientoFechas";
+import { useEstadoEdicion } from "../../hooks/useEdicion";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 import { useEffect, useState, type FormEvent } from "react";
 import { Check, Eye, FilePlus2, FileText, Pencil, RotateCcw, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -11,10 +14,10 @@ import {
   type Informe,
   type InformeGuardar,
 } from "../../servicios/api-informes";
-import { listarSesiones, type Sesion } from "../../servicios/api-seguimiento";
+import { type Sesion } from "../../servicios/api-seguimiento";
 import "./InformesPaciente.css";
 
-type Props = { pacienteId: number };
+type Props = { pacienteId: number; sesiones: Sesion[] | null };
 
 const hoyLocal = () => {
   const ahora = new Date();
@@ -40,9 +43,8 @@ const camposInforme = (informe: Informe): InformeGuardar => ({
   asistido_ia: informe.asistido_ia,
 });
 
-export default function InformesPaciente({ pacienteId }: Props) {
+export default function InformesPaciente({ pacienteId, sesiones }: Props) {
   const [informes, setInformes] = useState<Informe[]>([]);
-  const [sesiones, setSesiones] = useState<Sesion[] | null>(null);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [generando, setGenerando] = useState(false);
@@ -51,13 +53,12 @@ export default function InformesPaciente({ pacienteId }: Props) {
   const [actual, setActual] = useState<Informe | null>(null);
   const [creando, setCreando] = useState(false);
   const [formulario, setFormulario] = useState<InformeGuardar>(formularioVacio);
+  const [baseNueva, setBaseNueva] = useState<InformeGuardar>(formularioVacio);
   const [modoContenido, setModoContenido] = useState<"edicion" | "vista_previa">("edicion");
   const [filtro, setFiltro] = useState<"todos" | EstadoInforme>("todos");
 
   useEffect(() => {
     let vigente = true;
-    setCargando(true);
-    setError("");
     listarInformes(pacienteId)
       .then((datos) => { if (vigente) setInformes(datos); })
       .catch((fallo) => {
@@ -67,41 +68,22 @@ export default function InformesPaciente({ pacienteId }: Props) {
     return () => { vigente = false; };
   }, [pacienteId]);
 
-  useEffect(() => {
-    let vigente = true;
-    setSesiones(null);
-    listarSesiones(pacienteId)
-      .then((datos) => { if (vigente) setSesiones(datos); })
-      .catch(() => { if (vigente) setSesiones(null); });
-    return () => { vigente = false; };
-  }, [pacienteId]);
-
   const sesionesEnPeriodo = sesiones?.filter((sesion) =>
     sesion.fecha >= formulario.periodo_desde && sesion.fecha <= formulario.periodo_hasta
   );
   const editando = creando || actual !== null;
-  const cambioPendiente = creando
-    ? formulario.titulo.trim() !== "" || formulario.contenido.trim() !== "" ||
-      formulario.periodo_desde !== formulario.periodo_hasta
-    : actual !== null && JSON.stringify(formulario) !== JSON.stringify(camposInforme(actual));
+  const cambioPendiente = editando && JSON.stringify(formulario) !== JSON.stringify(actual ? camposInforme(actual) : baseNueva);
+  useEstadoEdicion(cambioPendiente, guardando || generando);
 
   const informesFiltrados = filtro === "todos" ? informes : informes.filter((informe) => informe.estado === filtro);
 
-  function confirmarSalida(): boolean {
-    return !cambioPendiente || window.confirm("Hay cambios sin guardar. ¿Querés descartarlos?");
-  }
-
   function nuevoInforme() {
-    if (generando) return;
-    if (!confirmarSalida()) return;
+    if (cargando || guardando || generando) return;
+    if (!confirmarSalidaEditor()) return;
     setActual(null);
     setCreando(true);
-    const nuevo = formularioVacio();
-    if (sesiones && sesiones.length > 0) {
-      const fechas = sesiones.map((sesion) => sesion.fecha).sort();
-      nuevo.periodo_desde = fechas[0];
-      nuevo.periodo_hasta = fechas[fechas.length - 1];
-    }
+    const nuevo = { ...formularioVacio(), ...periodoSesiones(sesiones ?? [], hoyLocal()) };
+    setBaseNueva(nuevo);
     setFormulario(nuevo);
     setModoContenido("edicion");
     setError("");
@@ -109,9 +91,9 @@ export default function InformesPaciente({ pacienteId }: Props) {
   }
 
   function seleccionarInforme(informe: Informe) {
-    if (generando) return;
+    if (guardando || generando) return;
     if (actual?.id === informe.id && !creando) return;
-    if (!confirmarSalida()) return;
+    if (!confirmarSalidaEditor()) return;
     setActual(informe);
     setCreando(false);
     setFormulario(camposInforme(informe));
@@ -126,6 +108,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
   }
 
   async function generar() {
+    if (guardando || generando) return;
     setError("");
     setMensaje("");
     if (!formulario.titulo.trim() || !formulario.periodo_desde || !formulario.periodo_hasta ||
@@ -160,6 +143,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
   }
 
   async function guardar(estado?: EstadoInforme) {
+    if (guardando || generando || !editando) return;
     setError("");
     setMensaje("");
     if (!formulario.titulo.trim() || !formulario.contenido.trim()) {
@@ -201,14 +185,14 @@ export default function InformesPaciente({ pacienteId }: Props) {
   }
 
   return (
-    <section className="informes-layout" aria-label="Gestión de informes" data-pendiente={cambioPendiente ? "true" : "false"}>
+    <section className="informes-layout" aria-label="Gestión de informes">
       <div className="pacientes-panel informes-listado">
         <div className="informes-listado-cabecera">
           <div>
             <h3>Informes guardados</h3>
             <p>Registros del seguimiento</p>
           </div>
-          <button type="button" className="pacientes-boton" onClick={nuevoInforme} disabled={generando}>
+          <button type="button" className="pacientes-boton" onClick={nuevoInforme} disabled={cargando || guardando || generando}>
             <FilePlus2 size={16} aria-hidden="true" /> Nuevo
           </button>
         </div>
@@ -227,7 +211,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
             {informesFiltrados.map((informe) => (
               <button key={informe.id} type="button"
                 className={`informes-item ${actual?.id === informe.id && !creando ? "activo" : ""}`}
-                onClick={() => seleccionarInforme(informe)} disabled={generando}>
+                onClick={() => seleccionarInforme(informe)} disabled={guardando || generando}>
                 <span className="informes-item-titulo"><FileText size={16} aria-hidden="true" /> {informe.titulo}</span>
                 <span className="informes-item-periodo">{fechaLegible(informe.periodo_desde)} – {fechaLegible(informe.periodo_hasta)}</span>
                 <span className="informes-item-pie">
@@ -245,7 +229,7 @@ export default function InformesPaciente({ pacienteId }: Props) {
             <FileText size={29} strokeWidth={1.6} aria-hidden="true" />
             <h3>Redactar o revisar un informe</h3>
             <p>Seleccioná un informe guardado o creá uno nuevo. Los borradores se pueden continuar más adelante.</p>
-            <button type="button" className="pacientes-boton" onClick={nuevoInforme} disabled={generando}>Crear informe</button>
+            <button type="button" className="pacientes-boton" onClick={nuevoInforme} disabled={cargando || guardando || generando}>Crear informe</button>
           </div>
         ) : (
           <form onSubmit={enviar} className="informes-formulario">

@@ -1,13 +1,13 @@
+import { escolaridadVigente } from "./seguimientoFechas";
+import { useFichaPaciente } from "./useFichaPaciente";
+import { confirmarSalidaEditor } from "../../hooks/estadoEdicion";
 import { useCallback, useEffect, useState, type KeyboardEvent } from "react";
 import { ArrowLeft, ArrowRight, CalendarDays, ClipboardList, FilePlus2, FileText, GraduationCap, Layers3, UserRound, UsersRound, Target, Activity, Clock3, Plus, ChevronRight, BookOpenText, MapPinned, ShieldCheck } from "lucide-react";
-import { listarSesiones, type Sesion } from "../../servicios/api-seguimiento";
-import { obtenerAdmision, guardarAdmision, listarEscolaridades, guardarEscolaridad, listarProfesionalesTratantes, guardarProfesionalTratante, listarObjetivos, guardarObjetivo } from "../../servicios/api";
-
 import type { Paciente } from "./Pacientes";
-import AdmisionPaciente, { type Admision } from "./AdmisionPaciente";
-import EscolaridadPaciente, { type Escolaridad, type EscolaridadGuardar } from "./EscolaridadPaciente";
-import ProfesionalesIntervinientes, { type ProfesionalTratante, type ProfesionalTratanteGuardar } from "./ProfesionalesIntervinientes";
-import ObjetivosPaciente, { type Objetivo, type ObjetivoGuardar } from "./ObjetivosPaciente";
+import AdmisionPaciente from "./AdmisionPaciente";
+import EscolaridadPaciente from "./EscolaridadPaciente";
+import ProfesionalesIntervinientes from "./ProfesionalesIntervinientes";
+import ObjetivosPaciente from "./ObjetivosPaciente";
 import SesionesPaciente from "./SesionesPaciente";
 import InformesPaciente from "./InformesPaciente";
 import DatosPersonalesPaciente from "./DatosPersonalesPaciente";
@@ -27,30 +27,39 @@ export default function FichaPaciente({
   onVolver,
   onPacienteActualizado,
 }: Props) {
-  const [admision, setAdmision] = useState<Admision | null>(null);
-  const [cargandoAdmision, setCargandoAdmision] = useState(true);
-  const [errorAdmision, setErrorAdmision] = useState("");
-  const [escolaridades, setEscolaridades] = useState<Escolaridad[]>([]);
-  const [cargandoEscolaridad, setCargandoEscolaridad] = useState(true);
-  const [errorEscolaridad, setErrorEscolaridad] = useState("");
-  const [profesionales, setProfesionales] = useState<ProfesionalTratante[]>([]);
-  const [cargandoProfesionales, setCargandoProfesionales] = useState(true);
-  const [errorProfesionales, setErrorProfesionales] = useState("");
-  const [objetivos, setObjetivos] = useState<Objetivo[]>([]);
-  const [cargandoObjetivos, setCargandoObjetivos] = useState(true);
-  const [errorObjetivos, setErrorObjetivos] = useState("");
-  const [revisionEvidencias, setRevisionEvidencias] = useState(0);
+  const {
+    admision,
+    cargandoAdmision,
+    errorAdmision,
+    escolaridades,
+    cargandoEscolaridad,
+    errorEscolaridad,
+    profesionales,
+    cargandoProfesionales,
+    errorProfesionales,
+    objetivos,
+    cargandoObjetivos,
+    errorObjetivos,
+    revisionEvidencias,
+    setRevisionEvidencias,
+    sesionesResumen,
+    cargandoSesionesResumen,
+    revisionSesiones,
+    setRevisionSesiones,
+    errorSesionesResumen,
+    guardarObjetivoPaciente,
+    guardarProfesionalPaciente,
+    guardarEscolaridadPaciente,
+    guardarAdmisionPaciente
+  } = useFichaPaciente(paciente.id);
   const [pestana, setPestana] = useState<Pestana>("resumen");
-  const [sesionesResumen, setSesionesResumen] = useState<Sesion[]>([]);
-  const [cargandoSesionesResumen, setCargandoSesionesResumen] = useState(true);
-  const [revisionSesiones, setRevisionSesiones] = useState(0);
-  const [errorSesionesResumen, setErrorSesionesResumen] = useState("");
   const [vistaSeguimiento, setVistaSeguimiento] = useState<"sesiones" | "objetivos">("sesiones");
   const [detalleInformacion, setDetalleInformacion] = useState<"datos" | "admision" | "escolaridad" | "profesionales" | null>(null);
   const [mesCronologia, setMesCronologia] = useState<string | null>(null);
   const [sesionDestino, setSesionDestino] = useState<number | null>(null);
   const [objetivoOrigen, setObjetivoOrigen] = useState<number | null>(null);
   const [objetivoDestino, setObjetivoDestino] = useState<number | null>(null);
+  const [claveSeguimiento, setClaveSeguimiento] = useState(0);
   const [solicitudNueva, setSolicitudNueva] = useState(0);
   const confirmarSolicitudNueva = useCallback(() => setSolicitudNueva(0), []);
 
@@ -63,185 +72,6 @@ export default function FichaPaciente({
     return () => window.removeEventListener("keydown", cerrar);
   }, [mesCronologia]);
 
-  useEffect(() => {
-    let vigente = true;
-    setCargandoSesionesResumen(true);
-    setErrorSesionesResumen("");
-    listarSesiones(paciente.id)
-      .then((datos) => { if (vigente) setSesionesResumen(datos); })
-      .catch((fallo) => {
-        if (vigente) {
-          setSesionesResumen([]);
-          setErrorSesionesResumen(fallo instanceof Error ? fallo.message : "No se pudieron cargar las sesiones.");
-        }
-      })
-      .finally(() => { if (vigente) setCargandoSesionesResumen(false); });
-    return () => { vigente = false; };
-  }, [paciente.id, revisionSesiones]);
-
-  useEffect(() => {
-    let vigente = true;
-    setCargandoAdmision(true);
-    setErrorAdmision("");
-
-    obtenerAdmision(paciente.id)
-      .then((datos) => {
-        if (vigente) setAdmision(datos);
-      })
-      .catch((fallo) => {
-        if (vigente) {
-          setErrorAdmision(
-            fallo instanceof Error ? fallo.message : "No se pudo cargar la admisión."
-          );
-        }
-      })
-      .finally(() => {
-        if (vigente) setCargandoAdmision(false);
-      });
-
-    return () => {
-      vigente = false;
-    };
-  }, [paciente.id]);
-
-  useEffect(() => {
-    let vigente = true;
-    setCargandoEscolaridad(true);
-    setErrorEscolaridad("");
-    setEscolaridades([]);
-
-    listarEscolaridades(paciente.id)
-      .then((datos) => {
-        if (vigente) setEscolaridades(datos);
-      })
-      .catch((fallo) => {
-        if (vigente) {
-          setErrorEscolaridad(
-            fallo instanceof Error ? fallo.message : "No se pudo cargar la escolaridad."
-          );
-        }
-      })
-      .finally(() => {
-        if (vigente) setCargandoEscolaridad(false);
-      });
-
-    return () => {
-      vigente = false;
-    };
-  }, [paciente.id]);
-
-  useEffect(() => {
-    let vigente = true;
-    setCargandoProfesionales(true);
-    setErrorProfesionales("");
-    setProfesionales([]);
-
-    listarProfesionalesTratantes(paciente.id)
-      .then((datos) => {
-        if (vigente) setProfesionales(datos);
-      })
-      .catch((fallo) => {
-        if (vigente) {
-          setErrorProfesionales(
-            fallo instanceof Error ? fallo.message : "No se pudieron cargar los profesionales."
-          );
-        }
-      })
-      .finally(() => {
-        if (vigente) setCargandoProfesionales(false);
-      });
-
-    return () => { vigente = false; };
-  }, [paciente.id]);
-
-  useEffect(() => {
-    let vigente = true;
-    setCargandoObjetivos(true);
-    setErrorObjetivos("");
-    setObjetivos([]);
-
-    listarObjetivos(paciente.id)
-      .then((datos) => {
-        if (vigente) setObjetivos(datos);
-      })
-      .catch((fallo) => {
-        if (vigente) setErrorObjetivos(
-          fallo instanceof Error ? fallo.message : "No se pudieron cargar los objetivos."
-        );
-      })
-      .finally(() => { if (vigente) setCargandoObjetivos(false); });
-
-    return () => { vigente = false; };
-  }, [paciente.id]);
-
-  async function guardarObjetivoPaciente(datos: ObjetivoGuardar, id?: number): Promise<void> {
-    setErrorObjetivos("");
-    try {
-      const guardado = await guardarObjetivo(paciente.id, datos, id);
-      setObjetivos((actuales) =>
-        id === undefined
-          ? [guardado, ...actuales]
-          : actuales.map((registro) => registro.id === guardado.id ? guardado : registro)
-      );
-    } catch (fallo) {
-      setErrorObjetivos(
-        fallo instanceof Error ? fallo.message : "No se pudo guardar el objetivo."
-      );
-      throw fallo;
-    }
-  }
-
-  async function guardarProfesionalPaciente(
-    datos: ProfesionalTratanteGuardar, id?: number
-  ): Promise<void> {
-    setErrorProfesionales("");
-    try {
-      const guardado = await guardarProfesionalTratante(paciente.id, datos, id);
-      setProfesionales((actuales) =>
-        id === undefined
-          ? [guardado, ...actuales]
-          : actuales.map((registro) => registro.id === guardado.id ? guardado : registro)
-      );
-    } catch (fallo) {
-      setErrorProfesionales(
-        fallo instanceof Error ? fallo.message : "No se pudo guardar el profesional."
-      );
-      throw fallo;
-    }
-  }
-
-  async function guardarEscolaridadPaciente(
-    datos: EscolaridadGuardar, id?: number
-  ): Promise<void> {
-    setErrorEscolaridad("");
-    try {
-      const guardado = await guardarEscolaridad(paciente.id, datos, id);
-      setEscolaridades((actuales) =>
-        id === undefined
-          ? [guardado, ...actuales]
-          : actuales.map((registro) => registro.id === guardado.id ? guardado : registro)
-      );
-    } catch (fallo) {
-      setErrorEscolaridad(
-        fallo instanceof Error ? fallo.message : "No se pudo guardar la escolaridad."
-      );
-      throw fallo;
-    }
-  }
-
-  async function guardarAdmisionPaciente(datos: Admision): Promise<void> {
-    setErrorAdmision("");
-    try {
-      const guardada = await guardarAdmision(paciente.id, datos);
-      setAdmision(guardada);
-    } catch (fallo) {
-      setErrorAdmision(
-        fallo instanceof Error ? fallo.message : "No se pudo guardar la admisión."
-      );
-      throw fallo;
-    }
-  }
-
   const fecha = (valor: string | null | undefined) => valor ? valor.split("-").reverse().join("/") : "Sin fecha";
   const hoy = new Date();
   const fechaActual = [hoy.getFullYear(), String(hoy.getMonth() + 1).padStart(2, "0"), String(hoy.getDate()).padStart(2, "0")].join("-");
@@ -252,9 +82,7 @@ export default function FichaPaciente({
   const edadLegible = edad !== null && edad >= 0 && edad <= 120 ? `${edad} años` : "Edad no disponible";
   const activos = objetivos.filter((objetivo) => objetivo.estado === "activo");
   const ultimaSesion = [...sesionesResumen].sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id)[0];
-  const escolaridadActual = [...escolaridades]
-    .filter((registro) => !registro.fecha_fin && registro.fecha_inicio <= fechaActual)
-    .sort((a, b) => b.fecha_inicio.localeCompare(a.fecha_inicio))[0];
+  const escolaridadActual = escolaridadVigente(escolaridades, fechaActual);
   const meses = Object.entries(sesionesResumen.reduce<Record<string, number>>((acum, sesion) => {
     const mes = sesion.fecha.slice(0, 7);
     acum[mes] = (acum[mes] ?? 0) + 1;
@@ -269,16 +97,7 @@ export default function FichaPaciente({
     { id: "informes", texto: "Informes", icono: FileText },
   ];
 
-  function hayFormularioSinGuardar() {
-    const panel = document.querySelector(`#panel-${pestana}`);
-    // Los editores de registros se desmontan al navegar, por eso se solicita confirmación.
-    const formularioAbierto = panel?.querySelector("form.admision-formulario, form.ficha-datos-formulario");
-    const informePendiente = panel?.querySelector('[data-pendiente="true"]');
-    return Boolean(formularioAbierto || informePendiente);
-  }
-  function confirmarNavegacion() {
-    return !hayFormularioSinGuardar() || window.confirm("Hay un formulario abierto con posibles cambios sin guardar. ¿Querés salir de esta vista?");
-  }
+  const confirmarNavegacion = confirmarSalidaEditor;
   function cambiarPestana(valor: Pestana) {
     if (valor === pestana || !confirmarNavegacion()) return false;
     setPestana(valor);
@@ -295,14 +114,17 @@ export default function FichaPaciente({
     setVistaSeguimiento("sesiones");
     setSesionDestino(null);
     setObjetivoOrigen(null);
+    setClaveSeguimiento((n) => n + 1);
     setSolicitudNueva((n) => n + 1);
   }
   function abrirSeguimiento(seccion: "sesiones" | "objetivos") {
+    if (pestana === "seguimiento" && seccion === vistaSeguimiento) return;
     if (pestana !== "seguimiento" && !cambiarPestana("seguimiento")) return;
     if (pestana === "seguimiento" && seccion !== vistaSeguimiento && !confirmarNavegacion()) return;
     setVistaSeguimiento(seccion);
     setObjetivoOrigen(null);
     if (seccion === "sesiones") setSesionDestino(null);
+    else setObjetivoDestino(null);
   }
   function abrirSesion(id: number, objetivoId?: number) {
     if (pestana !== "seguimiento" && !cambiarPestana("seguimiento")) return;
@@ -310,14 +132,13 @@ export default function FichaPaciente({
     setVistaSeguimiento("sesiones");
     setObjetivoOrigen(objetivoId ?? null);
     setSesionDestino(id);
+    setClaveSeguimiento((n) => n + 1);
     setMesCronologia(null);
-    window.setTimeout(() => document.getElementById(`sesion-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
   }
   function volverObjetivo(id: number) {
     if (!confirmarNavegacion()) return;
     setObjetivoDestino(id);
     setVistaSeguimiento("objetivos");
-    window.setTimeout(() => document.getElementById(`objetivo-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
   }
   function navegarPestanas(evento: KeyboardEvent<HTMLButtonElement>, indice: number) {
     const siguiente = evento.key === "ArrowRight" ? (indice + 1) % tabs.length
@@ -453,7 +274,7 @@ export default function FichaPaciente({
               <button type="button" className={vistaSeguimiento === "sesiones" ? "activo" : ""} aria-pressed={vistaSeguimiento === "sesiones"} onClick={() => abrirSeguimiento("sesiones")}><CalendarDays size={17}/> Sesiones</button>
               <button type="button" className={vistaSeguimiento === "objetivos" ? "activo" : ""} aria-pressed={vistaSeguimiento === "objetivos"} onClick={() => abrirSeguimiento("objetivos")}><Target size={17}/> Objetivos</button>
             </div>
-            {vistaSeguimiento === "sesiones" ? <SesionesPaciente pacienteId={paciente.id} objetivos={objetivos} sesionDestino={sesionDestino} solicitudNueva={solicitudNueva} onSolicitudNuevaProcesada={confirmarSolicitudNueva}
+            {vistaSeguimiento === "sesiones" ? <SesionesPaciente key={claveSeguimiento} pacienteId={paciente.id} objetivos={objetivos} sesionDestino={sesionDestino} solicitudNueva={solicitudNueva} onSolicitudNuevaProcesada={confirmarSolicitudNueva}
               objetivoOrigen={objetivoOrigen} onVolverObjetivo={volverObjetivo}
               onCambiarObservaciones={() => setRevisionEvidencias((n) => n + 1)} onCambiarSesiones={() => setRevisionSesiones((n) => n + 1)}/> :
               <ObjetivosPaciente registros={objetivos} onGuardar={guardarObjetivoPaciente} cargando={cargandoObjetivos} error={errorObjetivos} pacienteId={paciente.id}
@@ -465,7 +286,7 @@ export default function FichaPaciente({
           {pestana === "informes" && <>
             <div className="vista-encabezado"><div><p className="vista-sobretitulo">DOCUMENTACIÓN DEL ACOMPAÑAMIENTO</p><h2>Informes</h2>
               <p>Consultá borradores, redactá y revisá informes del paciente.</p></div></div>
-            <InformesPaciente pacienteId={paciente.id}/>
+            <InformesPaciente pacienteId={paciente.id} sesiones={cargandoSesionesResumen || errorSesionesResumen ? null : sesionesResumen}/>
           </>}
           </div>
         </div>
@@ -492,7 +313,7 @@ export default function FichaPaciente({
             {meses.map(([mes]) => <option value={mes} key={mes}>{nombreMes(mes)}</option>)}
           </select>
         </label>
-        <CronologiaPaciente pacienteId={paciente.id} mes={mesCronologia} objetivos={objetivos}
+        <CronologiaPaciente key={`${mesCronologia}-${revisionSesiones + revisionEvidencias}`} pacienteId={paciente.id} mes={mesCronologia} objetivos={objetivos}
           revision={revisionSesiones + revisionEvidencias} onVerSesion={(id) => abrirSesion(id)} onCerrar={() => setMesCronologia(null)}/>
       </div>}
       <button type="button" className="boton-cronologia-movil" aria-expanded={mesCronologia !== null}
